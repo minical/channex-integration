@@ -31,7 +31,7 @@ class Channex_int_model extends CI_Model {
 
     function update_token($data)
     {
-        $this->db->where('email', $data['email']);
+        $this->db->where('ota_id', $data['ota_id']);
         $this->db->where('company_id', $data['company_id']);
         $this->db->update("ota_manager", $data);
     }

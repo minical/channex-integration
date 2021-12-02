@@ -2,8 +2,8 @@
 class Channex_bookings extends MY_Controller
 {
     public $module_name;
-	function __construct()
-	{
+    function __construct()
+    {
 
         parent::__construct();
         $this->module_name = $this->router->fetch_module();
@@ -29,66 +29,67 @@ class Channex_bookings extends MY_Controller
         $this->load->library('../extensions/'.$this->module_name.'/libraries/ChannexEmailTemplate');        
         $this->load->helper('my_assets_helper');
         
-		$view_data['menu_on'] = true;
+        $view_data['menu_on'] = true;
 
-		$this->channex_url = ($this->config->item('app_environment') == "development") ? "https://secure-staging.channex.io" : "https://secure.channex.io";
+		    $this->channex_url = ($this->config->item('app_environment') == "development") ? "https://secure-staging.channex.io" : "https://secure.channex.io";
+        $this->channex_host = ($this->config->item('app_environment') == "development") ? "staging.channex.io" : "app.channex.io";
 
-		$this->load->vars($view_data);
-	}	
+        $this->load->vars($view_data);
+    }   
 
-	function refresh_token($company_id){
-		$channex_data = $this->Channex_int_model->get_channex_data($company_id, 'channex');
-		
+    function refresh_token($company_id){
+        $channex_data = $this->Channex_int_model->get_channex_data($company_id, 'channex');
+        
         if($channex_data){
-			if(isset($channex_data['created_date']) && $channex_data['created_date']){
-				
-				$timestamp = strtotime($channex_data['created_date']); //1373673600
+            if(isset($channex_data['created_date']) && $channex_data['created_date']){
+                
+                $timestamp = strtotime($channex_data['created_date']); //1373673600
 
-				// getting current date 
-				$cDate = strtotime(date('Y-m-d H:i:s'));
+                // getting current date 
+                $cDate = strtotime(date('Y-m-d H:i:s'));
 
-				// Getting the value of old date + 24 hours
-				$oldDate = $timestamp + 86400; // 86400 seconds in 24 hrs
+                // Getting the value of old date + 24 hours
+                $oldDate = $timestamp + 86400; // 86400 seconds in 24 hrs
 
-				if($oldDate < $cDate)
-				{
-					$token_data = json_decode($channex_data['meta_data']);
+                if($oldDate < $cDate)
+                {
+                    $token_data = json_decode($channex_data['meta_data']);
 
-	        		$refresh_token = $token_data->data->attributes->refresh_token;
+                    $refresh_token = $token_data->data->attributes->refresh_token;
 
-					$get_refresh_token_data = $this->channexintegration->refresh_token($refresh_token); // refresh_token function from channex integration library
-					$response = json_decode($get_refresh_token_data);
+                    $get_refresh_token_data = $this->channexintegration->refresh_token($refresh_token); // refresh_token function from channex integration library
+                    $response = json_decode($get_refresh_token_data);
 
-					if(isset($response->data) && $response->data){
+                    if(isset($response->data) && $response->data){
 
-						$data = array(
-										'meta_data' => $get_refresh_token_data,
-										'created_date' => date('Y-m-d H:i:s'),
-										'email' => $response->data->relationships->user->data->attributes->email,
-										'company_id' => $company_id,
-									);
+                        $data = array(
+                                        'meta_data' => $get_refresh_token_data,
+                                        'created_date' => date('Y-m-d H:i:s'),
+                                        'email' => $response->data->relationships->user->data->attributes->email,
+                                        'company_id' => $company_id,
+                                    );
 
-						$this->Channex_int_model->update_token($data);
-						return true;
-					}
-				} else {
-					return false;
-				}
-			}
-		}
-	}
+                        $this->Channex_int_model->update_token($data);
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        }
+    }
 
     function channex_retrieve_booking($ota_booking_id){
 
         $get_token_data = $this->Channex_int_model->get_token(null, $this->company_id, 'channex');
         $booking_response = array();
 
-        if($this->refresh_token($this->company_id)){
-            $get_token_data = $this->Channex_int_model->get_token(null, $this->company_id, 'channex');
-        }
+        // if($this->refresh_token($this->company_id)){
+        //     $get_token_data = $this->Channex_int_model->get_token(null, $this->company_id, 'channex');
+        // }
 
         $token_data = json_decode($get_token_data['meta_data']);
-        $token = $token_data->data->attributes->token;
+        $token = $token_data->channex->api_key;
 
         $booking = $this->channexintegration->revision_bookings($ota_booking_id, $token);
 
@@ -97,8 +98,8 @@ class Channex_bookings extends MY_Controller
         $this->channex_get_bookings($this->company_id, $response);
     }
 
-	function channex_get_bookings($company_id, $booking_revesion = array()){
-        	
+    function channex_get_bookings($company_id, $booking_revesion = array()){
+            
         if($booking_revesion){
 
             $booking_response->data[] = isset($booking_revesion->data) && $booking_revesion->data ? $booking_revesion->data : null;
@@ -109,54 +110,67 @@ class Channex_bookings extends MY_Controller
 
             $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
 
-            if($this->refresh_token($company_id)){
-                $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
-            }
+            // if($this->refresh_token($company_id)){
+            //     $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
+            // }
 
             $token_data = json_decode($get_token_data['meta_data']);
-            $token = $token_data->data->attributes->token;
+            $token = $token_data->channex->api_key;
 
         } else {
 
             $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
-        	$booking_response = array();
+            $booking_response = array();
 
-        	if($this->refresh_token($company_id)){
-        		$get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
-        	}
 
-        	$token_data = json_decode($get_token_data['meta_data']);
+        	// if($this->refresh_token($company_id)){
+        	// 	$get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
+        	// }
 
-        	if($token_data && isset($token_data->data) && $token_data->data && isset($token_data->data->attributes) && $token_data->data->attributes && isset($token_data->data->attributes->token) && $token_data->data->attributes->token){
 
-        		$token = $token_data->data->attributes->token;
+            $token_data = json_decode($get_token_data['meta_data']);
+
+
+        	// if($token_data && isset($token_data->data) && $token_data->data && isset($token_data->data->attributes) && $token_data->data->attributes && isset($token_data->data->attributes->token) && $token_data->data->attributes->token){
+
+            if($token_data)
+            {
+        		    $token = $token_data->channex->api_key;
+
 
                 $channex_x_company = $this->Channex_int_model->get_channex_x_company(null, $company_id, 'channex');
                 // $company_id = $channex_x_company['company_id'];
                 $property_id = $channex_x_company['ota_property_id'];
 
-        		$api_url = $this->channex_url;
-    			$method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=100&order[inserted_at]=desc';
+                $api_url = $this->channex_url;
+                $method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=100&order[inserted_at]=desc';
 
-    			$headers = array(
-    	            "Authorization: Bearer " . $token,
-    	            "Content-Type: application/json"
-    	        );
 
-    	        if(function_exists('retrieve_booking')){ // retrieve_booking function from Channex PCI helper
-        			$booking_response = retrieve_booking($api_url.$method, $headers, 'POST', array());
-            		$is_pci_booking = true;
-            	} else {
-            		$response = $this->channexintegration->get_bookings($property_id, $token); // get_bookings function from channex integration library 
-            		$booking_response = json_decode($response);
-            		$is_pci_booking = false;
-            	}
+    			    // $headers = array(
+    	       //           "Authorization: Bearer " . $token,
+    	       //           "Content-Type: application/json"
+    	       // );
+                $headers = array(
+                    "Host: ".$this->channex_host,
+                    "Content-Type: application/json",
+                    "user-api-key: ".$token
+
+                );
+
+                if(function_exists('retrieve_booking')){ // retrieve_booking function from Channex PCI helper
+                    $booking_response = retrieve_booking($api_url.$method, $headers, 'POST', array());
+                    $is_pci_booking = true;
+                } else {
+                    $response = $this->channexintegration->get_bookings($property_id, $token); // get_bookings function from channex integration library 
+                    $booking_response = json_decode($response);
+                    $is_pci_booking = false;
+                }
 
                 $this->save_logs($property_id, 2, 0, $api_url.$method, json_encode($booking_response));
-        	}
+            }
         }
 
-    	$booking_array = array();
+        $booking_array = array();
         
         // prx(json_encode($booking_response));
         // $booking_response = file_get_contents("php://input");
@@ -348,71 +362,71 @@ class Channex_bookings extends MY_Controller
             }
         }
 
-	    $bookings_to_be_deleted = array();
+        $bookings_to_be_deleted = array();
         $bookings_to_be_created = array();
         $modified_booking_charges_payments = array();
         $pms_confirmation_number = "";
         $is_booking_inserted = $pms_booking_ids = $booking_arr = array();
 
-	    if (count($booking_array) > 0)
+        if (count($booking_array) > 0)
         {
             foreach ($booking_array as $index => $booking)
             {
-            	if(
-            		(
-            			isset($booking['minical_room_type_id']) &&
-	            		$booking['minical_room_type_id'] && 
-	            		isset($booking['rate_plan']['minical_rate_plan_id']) && 
-	            		$booking['rate_plan']['minical_rate_plan_id']
-            		) || 
-            		$booking['booking_type'] == 'cancelled'
-            	){
-	            	if($booking['booking_type'] != 'modified')
-	            	{
-	            		if(empty($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'])))
-	            		{
-	            			$booking_arr[] = $booking;
-	            		} else {
-	            			echo "Booking already exists ID - ".$booking['ota_booking_id']."<br/>";
-	                    	unset($booking_array[$index]); 
-	                    	continue;
-	            		}
-	            	} else if($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'], $booking['check_in_date'], $booking['check_out_date'])) {
+                if(
+                    (
+                        isset($booking['minical_room_type_id']) &&
+                        $booking['minical_room_type_id'] 
+                        // && isset($booking['rate_plan']['minical_rate_plan_id']) && 
+                        // $booking['rate_plan']['minical_rate_plan_id']
+                    ) || 
+                    $booking['booking_type'] == 'cancelled'
+                ){
+                    if($booking['booking_type'] != 'modified')
+                    {
+                        if(empty($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'])))
+                        {
+                            $booking_arr[] = $booking;
+                        } else {
+                            echo "Booking already exists ID - ".$booking['ota_booking_id']."<br/>";
+                            unset($booking_array[$index]); 
+                            continue;
+                        }
+                    } else if($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'], $booking['check_in_date'], $booking['check_out_date'])) {
 
-	            		echo "Booking already exists ID - ".$booking['ota_booking_id']."<br/>";
-                    	unset($booking_array[$index]); 
-                    	continue;
-	            	} else {
-	            		$booking_arr[] = $booking;
-	            	}
-	        	}
-	        }
+                        echo "Booking already exists ID - ".$booking['ota_booking_id']."<br/>";
+                        unset($booking_array[$index]); 
+                        continue;
+                    } else {
+                        $booking_arr[] = $booking;
+                    }
+                }
+            }
 
-	        if($booking_arr){
-	        	foreach ($booking_arr as $index => $booking) {
+            if($booking_arr){
+                foreach ($booking_arr as $index => $booking) {
 
-		            if ($booking['booking_type'] == 'cancelled')
-	                {
-	                    $booking['this_booking_is_being_cancelled'] = true;
-	                    $bookings_to_be_deleted[] = $booking;
-	                }
-	                else
-	                {
-	                    if($booking['booking_type'] == 'modified') // modified bookings are deleted, then created
-	                    {
-	                        $booking['this_booking_is_being_cancelled'] = false;
-	                        $bookings_to_be_deleted[] = $booking;
-	                        $bookings_to_be_created[] = $booking;                   
-	                    }
-	                    else // new booking!
-	                    {
-	                        $bookings_to_be_created[] = $booking;
-	                    }
-	                }
-	            }
-	        }
+                    if ($booking['booking_type'] == 'cancelled')
+                    {
+                        $booking['this_booking_is_being_cancelled'] = true;
+                        $bookings_to_be_deleted[] = $booking;
+                    }
+                    else
+                    {
+                        if($booking['booking_type'] == 'modified') // modified bookings are deleted, then created
+                        {
+                            $booking['this_booking_is_being_cancelled'] = false;
+                            $bookings_to_be_deleted[] = $booking;
+                            $bookings_to_be_created[] = $booking;                   
+                        }
+                        else // new booking!
+                        {
+                            $bookings_to_be_created[] = $booking;
+                        }
+                    }
+                }
+            }
 
-	        // bookings deletion
+            // bookings deletion
             foreach($bookings_to_be_deleted as $booking)
             {
                 $booking_ids_to_be_deleted = $this->Channex_int_model->get_related_pms_booking_ids(
@@ -444,8 +458,8 @@ class Channex_bookings extends MY_Controller
                 // if the booking is being cancelled (but not modified), then send confirmation to OTA
 
                 if ($booking['this_booking_is_being_cancelled'] && $booking['ota_booking_id'] && isset($booking_ids_to_be_deleted[0]) && $booking_ids_to_be_deleted[0])
-        		{
-	                $ota_booking = array(
+                {
+                    $ota_booking = array(
                         'ota_booking_id' => $booking['ota_booking_id'],
                         'pms_booking_id' => $booking_ids_to_be_deleted[0],
                         'create_date_time' => date('Y-m-d H:i:s', time()),
@@ -461,15 +475,15 @@ class Channex_bookings extends MY_Controller
                     {
 
 
-                    	$update_availability_data = array(
-										'start_date' => $existing_booking[0]['check_in_date'],
-										'end_date' => $existing_booking[0]['check_out_date'],
-										'room_type_id' => $booking['minical_room_type_id'],
-										'company_id' => $company_id,
-										'update_from' => 'extension'
-            									);
+                        $update_availability_data = array(
+                                        'start_date' => $existing_booking[0]['check_in_date'],
+                                        'end_date' => $existing_booking[0]['check_out_date'],
+                                        'room_type_id' => $booking['minical_room_type_id'],
+                                        'company_id' => $company_id,
+                                        'update_from' => 'extension'
+                                                );
 
-						do_action('update_availability', $update_availability_data);
+                        do_action('update_availability', $update_availability_data);
                     }
 
                     $this->OTA_model->insert_booking($ota_booking);
@@ -480,25 +494,25 @@ class Channex_bookings extends MY_Controller
 
             // bookings creation 
             foreach($bookings_to_be_created as $key => $booking){
-            	$response = $this->create_bookings($booking);
+                $response = $this->create_bookings($booking);
 
-            	$is_booking_inserted[$booking['ota_booking_id']] = true;
+                $is_booking_inserted[$booking['ota_booking_id']] = true;
 
-            	$ota_booking = array(
-		                'ota_booking_id' => $response['ota_booking_id'],
-		                'booking_type' => $response['booking_type'],
-		                'check_in_date' => $booking['check_in_date'],
-		                'check_out_date' => $booking['check_out_date'],
-		                'pms_booking_id' => $response['minical_booking_id'],
-		                'create_date_time' => date('Y-m-d H:i:s', time()),
-		                'xml_out' => json_encode($booking, true)
-	                );
+                $ota_booking = array(
+                        'ota_booking_id' => $response['ota_booking_id'],
+                        'booking_type' => $response['booking_type'],
+                        'check_in_date' => $booking['check_in_date'],
+                        'check_out_date' => $booking['check_out_date'],
+                        'pms_booking_id' => $response['minical_booking_id'],
+                        'create_date_time' => date('Y-m-d H:i:s', time()),
+                        'xml_out' => json_encode($booking, true)
+                    );
 
-            	$pms_booking_ids[] = isset($response['minical_booking_id']) && $response['minical_booking_id'] ? $response['minical_booking_id'] : null;
-            	
-	            $this->OTA_model->insert_booking($ota_booking);
+                $pms_booking_ids[] = isset($response['minical_booking_id']) && $response['minical_booking_id'] ? $response['minical_booking_id'] : null;
+                
+                $this->OTA_model->insert_booking($ota_booking);
 
-	            if(count($modified_booking_charges_payments) > 0 && $response['minical_booking_id']) // set previous charges and payments with modified bookings
+                if(count($modified_booking_charges_payments) > 0 && $response['minical_booking_id']) // set previous charges and payments with modified bookings
                 {
                     if(isset($modified_booking_charges_payments[$response['ota_booking_id']]) && $modified_booking_charges_payments[$response['ota_booking_id']])
                     {
@@ -549,34 +563,34 @@ class Channex_bookings extends MY_Controller
                 $company_detail = $this->Companies_model->get_company_by_booking($response['minical_booking_id']);
 
                 $this->_send_booking_emails($response['minical_booking_id'], $response['booking_type'], $company_detail, $response['ota_booking_id'], $is_booking_inserted, $booking['check_in_date'], $booking['check_out_date']);
-            	
-            	if($is_pci_booking){
-					$xml_in = $api_url.$method;
-					$xml_out = json_encode($booking);
-				} else {
-					$xml_in = 'whithout card';
-					$xml_out = json_encode($booking);
-				}
+                
+                if($is_pci_booking){
+                    $xml_in = $api_url.$method;
+                    $xml_out = json_encode($booking);
+                } else {
+                    $xml_in = 'whithout card';
+                    $xml_out = json_encode($booking);
+                }
 
-				$property_data = $this->Channex_int_model->get_channex_x_company(null, $company_id, 'channex');
+                $property_data = $this->Channex_int_model->get_channex_x_company(null, $company_id, 'channex');
 
-				$this->save_logs($property_data['ota_property_id'], 2, 0, $xml_in, $xml_out);
-            	
-            	if($response['booking_type'] == 'modified'){
-            		$msg = "Booking modified successfully";
-            	} else {
-            		$msg = "Booking created successfully";
-            	}
+                $this->save_logs($property_data['ota_property_id'], 2, 0, $xml_in, $xml_out);
+                
+                if($response['booking_type'] == 'modified'){
+                    $msg = "Booking modified successfully";
+                } else {
+                    $msg = "Booking created successfully";
+                }
 
-            	$update_availability_data = array(
-										'start_date' => $booking['check_in_date'],
-										'end_date' => $booking['check_out_date'],
-										'room_type_id' => $booking['minical_room_type_id'],
-										'company_id' => $company_id,
-										'update_from' => 'extension'
-            									);
+                $update_availability_data = array(
+                                        'start_date' => $booking['check_in_date'],
+                                        'end_date' => $booking['check_out_date'],
+                                        'room_type_id' => $booking['minical_room_type_id'],
+                                        'company_id' => $company_id,
+                                        'update_from' => 'extension'
+                                                );
 
-				do_action('update_availability', $update_availability_data);
+                do_action('update_availability', $update_availability_data);
 
                 $booking_action_data = array(
                         'booking_id' => $response['minical_booking_id'], 
@@ -588,19 +602,19 @@ class Channex_bookings extends MY_Controller
 
                 do_action('post.add.booking', $booking_action_data);
 
-            	echo $msg." ID - ".$response['ota_booking_id']."<br/>";
+                echo $msg." ID - ".$response['ota_booking_id']."<br/>";
             }
         }
-	}
+    }
 
-	function get_modified_booking_charges_and_payments($param)
+    function get_modified_booking_charges_and_payments($param)
     {
         $charges_payments['payments'] = $charges_payments['charges'] = $charges_payments['states'] = $charges_payments['colors'] = array();
         $charges_total = $payments_total = $booking_details = array();
         $pms_booking_ids = $param['pms_booking_ids'];
         $booking_type = $param['booking_type'];
 
-		if(count($pms_booking_ids) > 0)
+        if(count($pms_booking_ids) > 0)
         {
             foreach($pms_booking_ids as $pms_booking_id)
             {
@@ -645,14 +659,14 @@ class Channex_bookings extends MY_Controller
         }
         
         if(count($charges_payments) > 0)
-        	return $charges_payments;
+            return $charges_payments;
         else
             return null;
     }
 
-	function modified_booking_charges_and_payments($new_charge_payments, $new_pms_booking_id)
+    function modified_booking_charges_and_payments($new_charge_payments, $new_pms_booking_id)
     {
-    	$param = array(
+        $param = array(
             "new_charges" => $new_charge_payments['charges'],
             "new_payments" => $new_charge_payments['payments'],
             "new_state" => $new_charge_payments['state'],
@@ -695,7 +709,7 @@ class Channex_bookings extends MY_Controller
         return array('success' => true);
     }
 
-	function delete_bookings($booking_ids_to_be_deleted)
+    function delete_bookings($booking_ids_to_be_deleted)
     {
         if (isset($booking_ids_to_be_deleted))
         {
@@ -756,12 +770,12 @@ class Channex_bookings extends MY_Controller
             }
         }
     }
-	
-	function create_bookings($booking){
+    
+    function create_bookings($booking){
 
-		if (!empty($booking))
+        if (!empty($booking))
 
-	    $minical_booking_id = $this->_create_booking($booking);
+        $minical_booking_id = $this->_create_booking($booking);
         if(is_numeric($minical_booking_id)){
             $response = array(
                     'ota_booking_id' => $booking['ota_booking_id'],
@@ -778,9 +792,9 @@ class Channex_bookings extends MY_Controller
         if (ob_get_contents()) ob_end_clean();
         
         return $response;
-	}
+    }
 
-	function _create_booking($booking)
+    function _create_booking($booking)
     {
         try{
             // create customer
@@ -843,7 +857,7 @@ class Channex_bookings extends MY_Controller
                 ); 
 
                 $meta['token'] = $cc_tokenex_token ? $cc_tokenex_token : null;
-	            $card_data['customer_meta_data'] = json_encode($meta);
+                $card_data['customer_meta_data'] = json_encode($meta);
 
             }
                     
@@ -946,8 +960,8 @@ class Channex_bookings extends MY_Controller
                         $rate_plan['charge_type_id'] =  $minical_rate_plan['charge_type_id'];
                     }
                 }
-                unset($rate_plan['minical_rate_plan_id']);
             }
+            unset($rate_plan['minical_rate_plan_id']);
 
             // get currency_id
             $currency_id = $this->Currency_model->get_currency_id($rate_plan['currency']['currency_code']);
@@ -1093,7 +1107,7 @@ class Channex_bookings extends MY_Controller
             $is_non_continuous_available = false;
             // if no room is available then get non contiuous room blocks
             // if(is_null($room_id) && isset($company_detail['allow_non_continuous_bookings']) && $company_detail['allow_non_continuous_bookings']){
-            // 	$is_non_continuous_available = $this->get_non_continuous_available_room_ids($booking_id, $minical_room_type_id, $company_id, $booking['check_in_date'],  $booking['check_out_date'], $company_detail['subscription_level'], $company_detail['book_over_unconfirmed_reservations']);
+            //  $is_non_continuous_available = $this->get_non_continuous_available_room_ids($booking_id, $minical_room_type_id, $company_id, $booking['check_in_date'],  $booking['check_out_date'], $company_detail['subscription_level'], $company_detail['book_over_unconfirmed_reservations']);
             // }
             $inventory = $avail_array = array();
             // if no room is available, then just assign the first room of the room_type
@@ -1103,26 +1117,26 @@ class Channex_bookings extends MY_Controller
 
                 if (isset($rooms_available[0]->room_id))
                 {
-                    // if($booking['booking_type'] == "new")
-                    // {
-                    //     $is_overbooking = true;
-                    //     $inventory[$minical_room_type_id] = $room_type;
-                    //     $avail_array = $this->Availability_model->get_availability(
-                    //                                             $booking['check_in_date'], 
-                    //                                             $booking['check_out_date'], 
-                    //                                             array_keys($inventory), 
-                    //                                             $booking['source'],
-                    //                                             true,
-                    //                                             $booking['adult_count'],
-                    //                                             isset($booking['children_count']) ? $booking['children_count'] : 0,
-                    //                                             false,
-                    //                                             false,
-                    //                                             false,
-                    //                                             false,
-                    //                                             $is_overbooking,
-                    //                                             $company_id
-                    //     );
-                    // }
+                    if($booking['booking_type'] == "new")
+                    {
+                        $is_overbooking = true;
+                        $inventory[$minical_room_type_id] = $room_type;
+                        $avail_array = $this->Availability_model->get_availability(
+                                                                $booking['check_in_date'], 
+                                                                $booking['check_out_date'], 
+                                                                array_keys($inventory), 
+                                                                $booking['source'],
+                                                                true,
+                                                                $booking['adult_count'],
+                                                                isset($booking['children_count']) ? $booking['children_count'] : 0,
+                                                                false,
+                                                                false,
+                                                                false,
+                                                                false,
+                                                                $is_overbooking,
+                                                                $company_id
+                        );
+                    }
                     $room_id = $rooms_available[0]->room_id;
                 }
             }
@@ -1133,11 +1147,11 @@ class Channex_bookings extends MY_Controller
             if(!is_null($room_id)){
                 // create booking_room_history
                 $booking_room_history_data = Array(
-	                'room_id' => $room_id,
-	                'check_in_date' => $company_detail['enable_new_calendar'] ? $booking['check_in_date'].' '.date("H:i:s", strtotime($company_detail['default_checkin_time'])) : $booking['check_in_date'],
-	                'check_out_date' => $company_detail['enable_new_calendar'] ? $booking['check_out_date'].' '.date("H:i:s", strtotime($company_detail['default_checkout_time'])) : $booking['check_out_date'],
-	                'booking_id' => $booking_id,
-	                'room_type_id' => $minical_room_type_id
+                    'room_id' => $room_id,
+                    'check_in_date' => $company_detail['enable_new_calendar'] ? $booking['check_in_date'].' '.date("H:i:s", strtotime($company_detail['default_checkin_time'])) : $booking['check_in_date'],
+                    'check_out_date' => $company_detail['enable_new_calendar'] ? $booking['check_out_date'].' '.date("H:i:s", strtotime($company_detail['default_checkout_time'])) : $booking['check_out_date'],
+                    'booking_id' => $booking_id,
+                    'room_type_id' => $minical_room_type_id
                 );
                 $this->Booking_room_history_model->create_booking_room_history($booking_room_history_data);
             }
@@ -1209,23 +1223,23 @@ class Channex_bookings extends MY_Controller
 
             $rt_availability = array();
             $no_rooms_available = false;
-            // if($is_overbooking)
-            // {
-            //     if(isset($avail_array) && $avail_array && count($avail_array) > 0)
-            //     {
-            //         foreach ($avail_array as $key => $value) {
-            //             $rt_availability[$value['date']] = $value['availability'];
-            //         }
-            //     }
-            //     array_pop($rt_availability);
+            if($is_overbooking)
+            {
+                if(isset($avail_array) && $avail_array && count($avail_array) > 0)
+                {
+                    foreach ($avail_array as $key => $value) {
+                        $rt_availability[$value['date']] = $value['availability'];
+                    }
+                }
+                array_pop($rt_availability);
 
-            //     if(in_array("0", $rt_availability))
-            //     {
-            //         $no_rooms_available = true;
-            //     }
+                if(in_array("0", $rt_availability))
+                {
+                    $no_rooms_available = true;
+                }
                 
-            //     $this->send_overbooking_email($booking_id, $is_non_continuous_available, $rt_availability, $no_rooms_available, $company_detail);
-            // }
+                $this->send_overbooking_email($booking_id, $is_non_continuous_available, $rt_availability, $no_rooms_available, $company_detail);
+            }
 
             return $booking_id;
         }
@@ -1234,19 +1248,36 @@ class Channex_bookings extends MY_Controller
         }
     }
 
+     function send_overbooking_email($booking_id, $is_non_continuous_available = true, $room_type_availability = null, $no_rooms_available = false, $company = null) {
+       
+        $result_array = $this->channexemailtemplate->send_overbooking_email($booking_id, $is_non_continuous_available, $room_type_availability, $no_rooms_available);
+        if ($result_array && $result_array['success']) {
+            $log_data = array(
+                    'selling_date' => $company['selling_date'],
+                    'user_id' => 2, //User_id 2 is Online Reservation
+                    'booking_id' => $booking_id,                  
+                    'date_time' => gmdate('Y-m-d H:i:s'),
+                    'log' => "Overbooking alert email sent to " . $result_array['owner_email'],
+                    'log_type' => SYSTEM_LOG
+                );
+
+            $this->Booking_log_model->insert_log($log_data);
+        }
+    }
+
     function _send_booking_emails($booking_id, $booking_type = null, $company_detail = null, $ota_booking_id = null, $is_booking_inserted = array(), $booking_check_in_date = null, $booking_check_out_date = null) {
 
         if ($booking_type == "cancelled")
         {
             if(isset($company_detail) && !$company_detail['email_cancellation_for_ota_reservations'])
-            {
-                $this->channexemailtemplate->send_booking_cancellation_email($booking_id); // to owners
-            }
+        {
+            $this->channexemailtemplate->send_booking_cancellation_email($booking_id); // to owners
         }
-       	else
-       	{
-           	if($booking_type == "modified")
-           	{
+        }
+        else
+        {
+            if($booking_type == "modified")
+            {
                 $is_send_emails = false;
                 $bookings = $this->Channex_int_model->get_bookings($ota_booking_id, null, null, 2);
                 
@@ -1284,14 +1315,14 @@ class Channex_bookings extends MY_Controller
 
     function save_logs($ota_property_id = null, $request_type = null, $response_type = null, $xml_in = null, $xml_out = null) {
 
-    	$data = array(
-    					'ota_property_id' => $ota_property_id ? $ota_property_id : null,
-    					'request_type' => ($request_type || $request_type == 0) ? $request_type : null,
-    					'response_type' => ($response_type || $response_type == 0) ? $response_type : null,
-    					'xml_in' => $xml_in ? $xml_in : null,
-    					'xml_out' => $xml_out ? $xml_out : null,
-					);
-    	$this->Channex_int_model->save_logs($data);
+        $data = array(
+                        'ota_property_id' => $ota_property_id ? $ota_property_id : null,
+                        'request_type' => ($request_type || $request_type == 0) ? $request_type : null,
+                        'response_type' => ($response_type || $response_type == 0) ? $response_type : null,
+                        'xml_in' => $xml_in ? $xml_in : null,
+                        'xml_out' => $xml_out ? $xml_out : null,
+                    );
+        $this->Channex_int_model->save_logs($data);
     }
     
     public function get_cc_cvc_encrypted($cvc = null, $token = null)

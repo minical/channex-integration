@@ -10,21 +10,21 @@
         <div class="panel-body form-horizontal ">
             <div id="configure-channex" class="hidden">
                 <div class="form-group rate-group text-center">
-                    <label for="channex_email" class="col-sm-3 control-label">
-                        <span alt="channex_email" title="channex_email"><?=l("channex_integration/Channex Email");?></span>
+                    <label for="channex_user_api_key" class="col-sm-3 control-label">
+                        <span alt="channex_user_api_key" title="channex_user_api_key"><?=l("channex_integration/Channex user api key");?></span>
                     </label>
                     <div class="col-sm-9">
-                        <input type="text" name="email" class="form-control" value="<?php echo isset($channex_data['email']) ? $channex_data['email'] : ''; ?>">
+                        <input type="text" name="user_api_key" class="form-control" value="<?php echo isset($channex_data['api_key']) ? $channex_data['api_key'] : ''; ?>">
                     </div>
                 </div>
-                <div class="form-group rate-group text-center">
+                <!-- <div class="form-group rate-group text-center">
                     <label for="channex_password" class="col-sm-3 control-label">
-                        <span alt="channex_password" title="channex_password"><?=l("channex_integration/Channex Password");?></span>
+                        <span alt="channex_password" title="channex_password"><?php//l("channex_integration/Channex Password");?></span>
                     </label>
                     <div class="col-sm-9">
-                        <input type="password" name="password" class="form-control" value="<?php echo isset($channex_data['password']) ? $channex_data['password'] : ''; ?>">
+                        <input type="password" name="password" class="form-control" value="<?php// echo isset($channex_data['password']) ? $channex_data['password'] : ''; ?>">
                     </div>
-                </div>
+                </div> -->
 
                 <div class="text-center">
                     <button type="button" class="btn btn-success login-channex" ><?=l("channex_integration/Sign in");?></button>
@@ -42,21 +42,21 @@
         <div class="panel-body form-horizontal ">
             <div id="configure-channex" class="">
                 <div class="form-group rate-group text-center">
-                    <label for="channex_email" class="col-sm-3 control-label">
-                        <span alt="channex_email" title="channex_email"><?=l("channex_integration/Channex Email");?></span>
+                    <label for="channex_user_api_key" class="col-sm-3 control-label">
+                        <span alt="channex_user_api_key" title="channex_user_api_key"><?=l("channex_integration/Channex user api key");?></span>
                     </label>
                     <div class="col-sm-9">
-                        <input type="text" name="email" class="form-control" value="<?php echo isset($channex_data['email']) ? $channex_data['email'] : ''; ?>">
+                        <input type="text" name="user_api_key" class="form-control" value="<?php echo isset($channex_data['api_key']) ? $channex_data['api_key'] : ''; ?>">
                     </div>
                 </div>
-                <div class="form-group rate-group text-center">
+                <!-- <div class="form-group rate-group text-center">
                     <label for="channex_password" class="col-sm-3 control-label">
                         <span alt="channex_password" title="channex_password"><?=l("channex_integration/Channex Password");?></span>
                     </label>
                     <div class="col-sm-9">
-                        <input type="password" name="password" class="form-control" value="<?php echo isset($channex_data['password']) ? $channex_data['password'] : ''; ?>">
+                        <input type="password" name="password" class="form-control" value="<?php// echo isset($channex_data['password']) ? $channex_data['password'] : ''; ?>">
                     </div>
-                </div>
+                </div> -->
 
                 <div class="text-center">
                     <button type="button" class="btn btn-success login-channex" ><?=l("channex_integration/Sign in");?></button>

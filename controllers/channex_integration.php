@@ -91,35 +91,40 @@ class Channex_integration extends MY_Controller
 		
         $data['main_content'] = '../extensions/'.$this->module_name.'/views/channex_authentication';
         $data['channex_data'] = $this->Channex_int_model->get_channex_data($this->company_id, 'channex');
-
+        
+        $token_data = json_decode($data['channex_data']['meta_data']);
+        if(isset($token_data) && $token_data){
+        	$data['channex_data']['api_key'] = $token_data->channex->api_key;	
+        }
+        
         $this->template->load('bootstrapped_template', null , $data['main_content'], $data);
 	}
 
 	function signin_channex(){
-		$email = $this->input->post('email');
-		$password = $this->input->post('password');
+		$user_api_key = $this->input->post('user_api_key');
 
-		$authentication = $this->channexintegration->signin_channex($email, $password);
+		$authentication = $this->channexintegration->signin_channex($user_api_key);
 
 		$response = json_decode($authentication, true);
 
 		$is_valid_creds = false;
 		if(isset($response['data']) && $response['data']){
 
+			$meta['channex']['api_key'] = $user_api_key;
 			$get_ota_data = $this->Channex_int_model->get_otas('channex');
 
 			$data = array(
-							'email' => $email,
-							'password' => $password,
 							'company_id' => $this->company_id,
-							'meta_data' => $authentication,
+							'meta_data' => json_encode($meta),
 							'created_date' => date('Y-m-d H:i:s'),
 							'ota_id' => isset($get_ota_data['id']) && $get_ota_data['id'] ? $get_ota_data['id'] : null
 						);
 
-			$channex_data = $this->Channex_int_model->get_data_by_email($email, $this->company_id);
+			$channex_data = $this->Channex_int_model->get_channex_data($this->company_id, 'channex');
 
 			if($channex_data){
+				unset($data['email']);
+				unset($data['password']);
 				$this->Channex_int_model->update_token($data);
 				$channex_id = $channex_data['id'];
 			} else {
@@ -155,13 +160,13 @@ class Channex_integration extends MY_Controller
         	
 	        if($get_token_data){
 
-	        	if($this->channex_refresh_token()){
-	        		$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
-	        	}
+	        	// if($this->channex_refresh_token()){
+	        	// 	$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
+	        	// }
 
 	        	$token_data = json_decode($get_token_data['meta_data']);
 
-	        	$token = $token_data->data->attributes->token;
+	        	$token = $token_data->channex->api_key;
 
 	        	$properties = $this->channexintegration->get_properties($token);
 
@@ -191,13 +196,13 @@ class Channex_integration extends MY_Controller
         	$property_id = $data['channex_room_types'][0]['ota_property_id'];
         	$rate_update_type = $data['channex_room_types'][0]['rate_update_type'];
 
-        	if($this->channex_refresh_token()){
+        	//if($this->channex_refresh_token()){
         		$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
-        	}
-
+        	//}
+          
         	$token_data = json_decode($get_token_data['meta_data']);
-
-        	$token = $token_data->data->attributes->token;
+        
+        	$token = $token_data->channex->api_key;
         	$is_mapping = true;
 
         	$room_types_data = $this->channexintegration->get_room_types($property_id, $token);
@@ -263,7 +268,7 @@ class Channex_integration extends MY_Controller
 
         $data['is_mapping'] = $is_mapping;
         $data['channex_id'] = $channex_id;
-
+        
         $this->template->load('bootstrapped_template', null , $data['main_content'], $data);
 	}
 
@@ -275,21 +280,20 @@ class Channex_integration extends MY_Controller
 		$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
 
         if($get_token_data){
-
-        	if($this->channex_refresh_token()){
-        		$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
-        	}
+         
+        	// if($this->channex_refresh_token()){
+        	// 	$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
+        	// }
 
         	$token_data = json_decode($get_token_data['meta_data']);
-
-        	$token = $token_data->data->attributes->token;
+        	$token = $token_data->channex->api_key;
 
         	$room_types_data = $this->channexintegration->get_room_types($property_id, $token);
         	$channex_room_types = json_decode($room_types_data, true);
-
+      
         	$rate_plans_data = $this->channexintegration->get_rate_plans($property_id, $token);
         	$channex_rate_plans = json_decode($rate_plans_data, true);
-
+       
         	if (isset($channex_rate_plans['data']) && count($channex_rate_plans['data']) > 0) {
 	        	foreach ($channex_rate_plans['data'] as $key => $value) {
 	        		if(

@@ -42,19 +42,17 @@ $(document).ready(function(){
     });
 
     $('body').on('click','.login-channex',function(){
-        var email = $('input[name="email"]').val();
-        var password = $('input[name="password"]').val();
-
-        if(email == ''){
-            alert(l('Please enter Email ID', true));
-        } else if(password == ''){
-            alert(l('Please enter password', true));
-        } else {
+        var user_api_key = $('input[name="user_api_key"]').val();
+        
+        if(user_api_key == ''){
+            alert(l('Please enter User API Key', true));
+        }
+          else {
             $.ajax({
                 type    : "POST",
                 dataType: 'json',
                 url     : getBaseURL() + 'signin_channex',
-                data: {email : email, password : password},
+                data: {user_api_key : user_api_key},
                 success: function( data ) {
                     if(data.success){
                         window.location.href = getBaseURL() + 'channex_properties/' + data.channex_id

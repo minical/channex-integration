@@ -792,4 +792,78 @@ class ChannexEmailTemplate {
         $msg = l('channex_integration/Email successfully sent to ', true);
         return $msg.$customer_email;
     }
+
+    function send_overbooking_email($booking_id, $is_non_continuous_available = true, $room_type_availability = null, $no_rooms_available = false)
+    {       
+
+      
+        $booking_data = $this->ci->Booking_model->get_booking($booking_id);
+        $company_id = $booking_data['company_id'];
+        $company = $this->ci->Company_model->get_company($company_id);
+
+        $this->set_language($company['default_language']);
+
+        $booking_room_history_data = $this->ci->Booking_room_history_model->get_block($booking_id);
+        $room_data = $this->ci->Room_model->get_room($booking_room_history_data['room_id']);
+
+        $customer_info = $this->ci->Customer_model->get_customer($booking_data['booking_customer_id']);             
+        $room_type = $this->ci->Room_type_model->get_room_type($room_data['room_type_id']);             
+
+        //Send confirmation email
+        $email_data = array (                   
+            'booking_id' => $booking_id,
+            
+            'customer_name' => $customer_info['customer_name'],
+            
+            'customer_address' => $customer_info['address'],
+            'customer_city' => $customer_info['city'],
+            'customer_region' => $customer_info['region'],
+            'customer_country' => $customer_info['country'],
+            'customer_postal_code' => $customer_info['postal_code'],
+            
+            'customer_phone' => $customer_info['phone'],
+            'customer_email' => $customer_info['email'],
+            
+            'check_in_date' => $booking_room_history_data['check_in_date'],
+            'check_out_date' => $booking_room_history_data['check_out_date'],
+            
+            'room_type' => $room_type['name'],
+            'room'      => $room_data['room_name'],
+            'source'    => $booking_data['source'],
+            
+            'company_name' => $company['name'],
+            'allow_non_continuous_bookings' => $company['allow_non_continuous_bookings'],
+            'is_non_continuous_available' => $is_non_continuous_available,
+            'room_type_availability' => $room_type_availability,
+            'no_rooms_available' => $no_rooms_available
+        );
+
+
+        $this->ci->email->from('support@roomsy.com');
+  
+        // don't send emails unless in production environment
+        if (strtolower($_SERVER['HTTP_HOST']) == 'app.minical.io')
+        {
+            if (isset($company['email']))
+            {
+                $this->ci->email->to($company['email']);
+                $this->ci->email->cc('pankaj@minical.io');
+            }   
+        }
+        else
+        {
+            $this->ci->email->to('pankaj@minical.io');
+        }
+
+        $this->ci->email->reply_to('support@minical.io');
+        
+        $this->ci->email->subject('Overbooking alert | ' . $email_data['company_name']);
+        $this->ci->email->message($this->ci->load->view('../extensions/'.$this->module_name.'/views/over_booking_html', $email_data, true));
+       
+        $this->ci->email->send();
+    
+        $this->reset_language($company['default_language']);
+
+        return array('success' => true, 'owner_email' => $company['email']);
+    }
 }

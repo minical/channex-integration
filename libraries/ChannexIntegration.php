@@ -12,6 +12,7 @@ class ChannexIntegration
         $this->ci->load->model('Channex_int_model');
 
         $this->channex_url = ($this->ci->config->item('app_environment') == "development") ? "https://staging.channex.io" : "https://app.channex.io";
+        $this->channex_host = ($this->ci->config->item('app_environment') == "development") ? "staging.channex.io" : "app.channex.io";
     }
 
     public function call_api($api_url, $method, $data, $headers, $method_type = 'POST'){
@@ -39,28 +40,64 @@ class ChannexIntegration
         return $response;
     }
 
-    public function signin_channex($email, $password){
+    // public function signin_channex($email, $password){
+
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/sign_in';
+
+    //     $data = array(
+    //                 'user' => array(
+    //                         'email' => $email,
+    //                         'password' => $password
+    //                     )
+    //             );
+
+    //     $headers = array(
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers);
+
+    //     return $response;
+    // }
+
+    public function signin_channex($token){
 
         $api_url = $this->channex_url;
-        $method = '/api/v1/sign_in';
-
-        $data = array(
-                    'user' => array(
-                            'email' => $email,
-                            'password' => $password
-                        )
-                );
+        $method = '/api/v1/properties';
+        $method_type = 'GET';
+        $data = array();
 
         $headers = array(
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key:".$token
         );
 
-        $response = $this->call_api($api_url, $method, $data, $headers);
+        $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
         return $response;
     }
 
-    public function get_properties($token){
+    // public function get_properties($token){
+
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/properties?pagination[limit]=100&order[inserted_at]=desc';
+    //     $method_type = 'GET';
+
+    //     $data = array();
+
+    //     $headers = array(
+    //         "Authorization: Bearer " . $token,
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
+
+    //     return $response;
+    // }
+
+     public function get_properties($token){
 
         $api_url = $this->channex_url;
         $method = '/api/v1/properties?pagination[limit]=100&order[inserted_at]=desc';
@@ -69,14 +106,34 @@ class ChannexIntegration
         $data = array();
 
         $headers = array(
-            "Authorization: Bearer " . $token,
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key: ".$token
         );
 
         $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
         return $response;
     }
+
+
+    // public function get_room_types($property_id, $token){
+
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/room_types?filter[property_id]='.$property_id;
+    //     $method_type = 'GET';
+
+    //     $data = array();
+
+    //     $headers = array(
+    //         "Authorization: Bearer " . $token,
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
+
+    //     return $response;
+    // }
 
     public function get_room_types($property_id, $token){
 
@@ -87,14 +144,32 @@ class ChannexIntegration
         $data = array();
 
         $headers = array(
-            "Authorization: Bearer " . $token,
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key: ".$token
         );
 
         $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
         return $response;
     }
+    // public function get_rate_plans($property_id, $token){
+
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/rate_plans?pagination[limit]=100&filter[property_id]='.$property_id;
+    //     $method_type = 'GET';
+
+    //     $data = array();
+
+    //     $headers = array(
+    //         "Authorization: Bearer " . $token,
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
+
+    //     return $response;
+    // }
 
     public function get_rate_plans($property_id, $token){
 
@@ -105,30 +180,62 @@ class ChannexIntegration
         $data = array();
 
         $headers = array(
-            "Authorization: Bearer " . $token,
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key: ".$token
         );
 
         $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
         return $response;
     }
+    // public function update_availability($data, $token){
 
-    public function update_availability($data, $token){
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/availability';
+    //     $method_type = 'POST';
+
+    //     $headers = array(
+    //         "Authorization: Bearer " . $token,
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
+
+    //     return $response;
+    // }
+
+     public function update_availability($data, $token){
 
         $api_url = $this->channex_url;
         $method = '/api/v1/availability';
         $method_type = 'POST';
 
         $headers = array(
-            "Authorization: Bearer " . $token,
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key: ".$token
         );
 
         $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
         return $response;
     }
+    // public function update_restrictions($data, $token){
+
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/restrictions';
+    //     $method_type = 'POST';
+
+    //     $headers = array(
+    //         "Authorization: Bearer " . $token,
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
+
+    //     return $response;
+    // }
 
     public function update_restrictions($data, $token){
 
@@ -137,14 +244,33 @@ class ChannexIntegration
         $method_type = 'POST';
 
         $headers = array(
-            "Authorization: Bearer " . $token,
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key: ".$token
         );
 
         $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
         return $response;
     }
+    // public function get_bookings($property_id, $token){
+
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=100&order[inserted_at]=desc';
+
+    //     $method_type = 'GET';
+
+    //     $data = array();
+
+    //     $headers = array(
+    //         "Authorization: Bearer " . $token,
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
+
+    //     return $response;
+    // }
 
     public function get_bookings($property_id, $token){
 
@@ -156,8 +282,9 @@ class ChannexIntegration
         $data = array();
 
         $headers = array(
-            "Authorization: Bearer " . $token,
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key: ".$token
         );
 
         $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
@@ -165,7 +292,25 @@ class ChannexIntegration
         return $response;
     }
 
-    public function acknowledge_bookings($booking_id, $token){
+    // public function acknowledge_bookings($booking_id, $token){
+
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/booking_revisions/'.$booking_id.'/ack';
+    //     $method_type = 'POST';
+
+    //     $data = array();
+
+    //     $headers = array(
+    //         "Authorization: Bearer " . $token,
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
+
+    //     return $response;
+    // }
+
+     public function acknowledge_bookings($booking_id, $token){
 
         $api_url = $this->channex_url;
         $method = '/api/v1/booking_revisions/'.$booking_id.'/ack';
@@ -174,16 +319,34 @@ class ChannexIntegration
         $data = array();
 
         $headers = array(
-            "Authorization: Bearer " . $token,
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key: ".$token
         );
 
         $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
         return $response;
     }
+    // public function revision_bookings($booking_id, $token){
 
-    public function revision_bookings($booking_id, $token){
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/booking_revisions/'.$booking_id;
+    //     $method_type = 'GET';
+
+    //     $data = array();
+
+    //     $headers = array(
+    //         "Authorization: Bearer " . $token,
+    //         "Content-Type: application/json"
+    //     );
+
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
+
+    //     return $response;
+    // }
+
+public function revision_bookings($booking_id, $token){
 
         $api_url = $this->channex_url;
         $method = '/api/v1/booking_revisions/'.$booking_id;
@@ -192,29 +355,29 @@ class ChannexIntegration
         $data = array();
 
         $headers = array(
-            "Authorization: Bearer " . $token,
-            "Content-Type: application/json"
+            "Host: ".$this->channex_host,
+            "Content-Type: application/json",
+            "user-api-key: ".$token
         );
 
         $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
         return $response;
     }
+    // public function refresh_token($refresh_token){
 
-    public function refresh_token($refresh_token){
+    //     $api_url = $this->channex_url;
+    //     $method = '/api/v1/refresh';
+    //     $method_type = 'POST';
 
-        $api_url = $this->channex_url;
-        $method = '/api/v1/refresh';
-        $method_type = 'POST';
+    //     $data = array();
 
-        $data = array();
+    //     $headers = array(
+    //         "Authorization: Bearer " . $refresh_token
+    //     );
 
-        $headers = array(
-            "Authorization: Bearer " . $refresh_token
-        );
+    //     $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
 
-        $response = $this->call_api($api_url, $method, $data, $headers, $method_type);
-
-        return $response;
-    }
+    //     return $response;
+    // }
 }

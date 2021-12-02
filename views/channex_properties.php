@@ -45,7 +45,7 @@
                     <?php foreach ($properties['data'] as $property): ?>
                         <option 
                         value="<?php echo $property['attributes']['id']; ?>"
-                        <?php echo $channex_room_types[0]['channex_property_id'] == $property['attributes']['id'] ? 'SELECTED' : ''; ?>
+                        <?php echo $channex_room_types[0]['ota_property_id'] == $property['attributes']['id'] ? 'SELECTED' : ''; ?>
                         ><?php echo $property['attributes']['title']; ?></option>
                     <?php endforeach; ?>
                 </select>

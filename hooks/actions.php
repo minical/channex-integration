@@ -40,7 +40,7 @@ function update_availability_fn ($data) {
 }
 
 function update_availability_batch ($start_date, $end_date, $data) {
-
+   
     $CI = &get_instance();
     $CI->load->model('../extensions/channex_integration/models/Channex_int_model');
     $CI->load->model('../extensions/channex_integration/models/Room_type_model');
@@ -57,7 +57,7 @@ function update_availability_batch ($start_date, $end_date, $data) {
     $update_from = isset($data['update_from']) && $data['update_from'] ? $data['update_from'] : null;
 
     //if($update_from == 'extension')
-        $CI->company_id = isset($data['company_id']) && $data['company_id'] ? $data['company_id'] : null;
+    $CI->company_id = isset($data['company_id']) && $data['company_id'] ? $data['company_id'] : $this->session->userdata('anonymous_company_id');
 
     $channex_x_company = $CI->Channex_int_model->get_channex_x_company(null, $CI->company_id, 'channex');
 
@@ -76,7 +76,7 @@ function update_availability_batch ($start_date, $end_date, $data) {
 
         $get_ota = $CI->Channex_int_model->get_channex_data($CI->company_id, 'channex');
 
-        if($update_from == 'extension'){
+        //if($update_from == 'extension'){
 
             $company_key_data = $CI->Companies_model->get_company_api_permission($CI->company_id);
             $company_access_key = isset($company_key_data[0]['key']) && $company_key_data[0]['key'] ? $company_key_data[0]['key'] : null;
@@ -89,19 +89,24 @@ function update_availability_batch ($start_date, $end_date, $data) {
                 null,
                 null,
                 true,
+                null,
+                true,
+                true,
+                true,
+                true,
                 $company_access_key
             );
-        } else {
-            $room_types_avail_array = $CI->Room_type_model->get_room_type_availability(
-                $CI->company_id,
-                $get_ota['ota_id'],
-                $start_date,
-                $end_date,
-                null,
-                null,
-                true
-            );
-        }
+        // } else {
+        //     $room_types_avail_array = $CI->Room_type_model->get_room_type_availability(
+        //         $CI->company_id,
+        //         $get_ota['ota_id'],
+        //         $start_date,
+        //         $end_date,
+        //         null,
+        //         null,
+        //         true
+        //     );
+        // }
 
         foreach ($room_types_avail_array as $key => $value) {
             foreach ($room_type_data as $key1 => $value1) {
@@ -112,28 +117,30 @@ function update_availability_batch ($start_date, $end_date, $data) {
         }
 
         foreach ($room_types_avail_array as $key => $value) {
-            foreach ($value['availability'] as $key1 => $avail) {
-                if(isset($value['ota_room_type_id']) && $value['ota_room_type_id']){
-                    $availability_data[] =  array(
-                        "availability" => (int)$avail['availability'],
-                        "date_from" => $avail['date_start'],
-                        
-                        "date_to" => strtotime($avail['date_start']) > strtotime("-1 day", strtotime($avail['date_end'])) ? $avail['date_end'] : date("Y-m-d", strtotime("-1 day", strtotime($avail['date_end']))),
-                        "property_id" => $property_id,
-                        "room_type_id" => $value['ota_room_type_id']
-                    );
+            if(isset($value['availability']) && $value['availability']){
+                foreach ($value['availability'] as $key1 => $avail) {
+                    if(isset($value['ota_room_type_id']) && $value['ota_room_type_id']){
+                        $availability_data[] =  array(
+                            "availability" => (int)$avail['availability'],
+                            "date_from" => $avail['date_start'],
+                            
+                            "date_to" => strtotime($avail['date_start']) > strtotime("-1 day", strtotime($avail['date_end'])) ? $avail['date_end'] : date("Y-m-d", strtotime("-1 day", strtotime($avail['date_end']))),
+                            "property_id" => $property_id,
+                            "room_type_id" => $value['ota_room_type_id']
+                        );
+                    }
                 }
             }
         }
-
+    
         $get_token_data = $CI->Channex_int_model->get_token(null, $CI->company_id, 'channex');
-
-        if(channex_refresh_token()){
-            $get_token_data = $CI->Channex_int_model->get_token(null, $CI->company_id, 'channex');
-        }
+        
+        // if(channex_refresh_token()){
+        //     $get_token_data = $CI->Channex_int_model->get_token(null, $CI->company_id, 'channex');
+        // }
 
         $token_data = json_decode($get_token_data['meta_data']);
-        $token = isset($token_data->data->attributes->token) && $token_data->data->attributes->token ? $token_data->data->attributes->token : null;
+        $token = isset($token_data->channex->api_key) && $token_data->channex->api_key ? $token_data->channex->api_key : null;
 
         if($token){
             $avail_array["values"] = $availability_data;
@@ -460,13 +467,13 @@ function update_rates_batch ($start_date, $end_date, $data) {
     }
 
     $get_token_data = $CI->Channex_int_model->get_token(null, $CI->company_id, 'channex');
-
-    if(channex_refresh_token()){
-        $get_token_data = $CI->Channex_int_model->get_token(null, $CI->company_id, 'channex');
-    }
+    
+    // if(channex_refresh_token()){
+    //     $get_token_data = $CI->Channex_int_model->get_token(null, $CI->company_id, 'channex');
+    // }
 
     $token_data = json_decode($get_token_data['meta_data']);
-    $token = isset($token_data->data->attributes->token) && $token_data->data->attributes->token ? $token_data->data->attributes->token : null;
+    $token = isset($token_data->channex->api_key) && $token_data->channex->api_key ? $token_data->channex->api_key : null;
 
     if($token){
         $rate_array['values'] = $rate_data;

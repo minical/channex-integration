@@ -13,7 +13,7 @@ class Room_type_model extends CI_Model {
 
 	// return company's room_types
 
-    function get_room_type_availability($company_id, $ota_id, $start_date, $end_date, $adult_count = null, $children_count = null, $filter_can_be_sold_online = true, $company_access_key = null, $company_group_id = null, $get_max_availability = true, $get_inventorysold = true, $get_closeout_status = true, $get_inventory = true)
+    function get_room_type_availability($company_id, $ota_id, $start_date, $end_date, $adult_count = null, $children_count = null, $filter_can_be_sold_online = true, $company_group_id = null, $get_max_availability = true, $get_inventorysold = true, $get_closeout_status = true, $get_inventory = true, $company_access_key = null , $ota_key = null)
 	{
         $inventory = array();
 		
@@ -39,11 +39,12 @@ class Room_type_model extends CI_Model {
                 'get_closeout_status'		=> $get_closeout_status,
                 'get_inventory'             => $get_inventory,
                 'company_id'                => $company_id,
+                'ota_key'                   => $ota_key,
                 'X-API-KEY'                 => $company_access_key ? $company_access_key : $this->company_api_key
             )
         );
         $req = $this->call_api($this->config->item('api_url').'/v1/inventory/availability?'.$query, array(), array(), 'GET');
-
+prx($req, 1);
         // $req = Requests::get($this->config->item('api_url').'/v1/inventory/availability?'.$query);
         // if response empty aka no availability, ensure actual array is created anyway
         if(isset($_GET['dev_mode']) && $_GET['dev_mode'] === getenv('DEVMODE_PASS')){
