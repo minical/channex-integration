@@ -92,7 +92,15 @@ class Channex_integration extends MY_Controller
         $data['main_content'] = '../extensions/'.$this->module_name.'/views/channex_authentication';
         $data['channex_data'] = $this->Channex_int_model->get_channex_data($this->company_id, 'channex');
         
-        $token_data = json_decode($data['channex_data']['meta_data']);
+        if(
+        	isset($data['channex_data']) && 
+        	$data['channex_data'] &&
+        	isset($data['channex_data']['meta_data']) &&
+        	$data['channex_data']['meta_data']
+        ){
+        	$token_data = json_decode($data['channex_data']['meta_data']);
+        }
+        
         if(isset($token_data) && $token_data){
         	$data['channex_data']['api_key'] = $token_data->channex->api_key;	
         }

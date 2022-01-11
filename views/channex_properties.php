@@ -24,16 +24,6 @@
             </div>
         </div>
 
-        <!-- <div class="col-md-6" style="margin: 1px;">
-            <div class="position-relative form-group">
-                <label for="exampleZip" class=""><?php echo l('channex_integration/Rate Update Type'); ?></label>
-                <select name="rate_type" class="form-control rate_type">
-                    <option value="OBP" <?php if($channex_room_types[0]['rate_update_type'] == 'OBP') { echo 'selected'; } ?> >Occupancy Based Pricing</option>
-                    <option value="PRP" <?php if($channex_room_types[0]['rate_update_type'] == 'PRP') { echo 'selected'; } ?> >Per-Room Pricing</option>
-                </select>
-            </div>
-        </div> -->
-
         <?php else: ?>
 
         <div class="col-md-6">
@@ -45,7 +35,7 @@
                     <?php foreach ($properties['data'] as $property): ?>
                         <option 
                         value="<?php echo $property['attributes']['id']; ?>"
-                        <?php echo $channex_room_types[0]['ota_property_id'] == $property['attributes']['id'] ? 'SELECTED' : ''; ?>
+                        <?php if(isset($channex_room_types[0]) && isset($channex_room_types[0]['ota_property_id']) && $channex_room_types[0]['ota_property_id']) { echo $channex_room_types[0]['ota_property_id'] == $property['attributes']['id'] ? 'SELECTED' : ''; } ?>
                         ><?php echo $property['attributes']['title']; ?></option>
                     <?php endforeach; ?>
                 </select>
