@@ -20,7 +20,7 @@ class Channex_bookings extends MY_Controller
         $this->load->model('../extensions/'.$this->module_name.'/models/Date_range_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Booking_room_history_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Booking_log_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Bookings_model');
+        $this->load->model('../extensions/'.$this->module_name.'/models/Channex_booking_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Invoice_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/OTA_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Availability_model');
@@ -31,7 +31,7 @@ class Channex_bookings extends MY_Controller
         
         $view_data['menu_on'] = true;
 
-		    $this->channex_url = ($this->config->item('app_environment') == "development") ? "https://secure-staging.channex.io" : "https://secure.channex.io";
+        $this->channex_url = ($this->config->item('app_environment') == "development") ? "https://secure-staging.channex.io" : "https://secure.channex.io";
         $this->channex_host = ($this->config->item('app_environment') == "development") ? "staging.channex.io" : "app.channex.io";
 
         $this->load->vars($view_data);
@@ -99,6 +99,10 @@ class Channex_bookings extends MY_Controller
     }
 
     function channex_get_bookings($company_id, $booking_revesion = array()){
+
+        $is_error = false;
+        $error_cause = '';
+        $email_data = array();
             
         if($booking_revesion){
 
@@ -122,51 +126,49 @@ class Channex_bookings extends MY_Controller
             $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
             $booking_response = array();
 
-
-        	// if($this->refresh_token($company_id)){
-        	// 	$get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
-        	// }
-
+            // if($this->refresh_token($company_id)){
+            //  $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
+            // }
 
             $token_data = json_decode($get_token_data['meta_data']);
 
-
-        	// if($token_data && isset($token_data->data) && $token_data->data && isset($token_data->data->attributes) && $token_data->data->attributes && isset($token_data->data->attributes->token) && $token_data->data->attributes->token){
+            // if($token_data && isset($token_data->data) && $token_data->data && isset($token_data->data->attributes) && $token_data->data->attributes && isset($token_data->data->attributes->token) && $token_data->data->attributes->token){
 
             if($token_data)
             {
-        		    $token = $token_data->channex->api_key;
-
+                $token = $token_data->channex->api_key;
 
                 $channex_x_company = $this->Channex_int_model->get_channex_x_company(null, $company_id, 'channex');
-                // $company_id = $channex_x_company['company_id'];
                 $property_id = $channex_x_company['ota_property_id'];
 
-                $api_url = $this->channex_url;
-                $method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=100&order[inserted_at]=desc';
+                if($property_id)
+                {
+                    $api_url = $this->channex_url;
+                    $method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=100&order[inserted_at]=desc';
 
+                    $headers = array(
+                        "Host: ".$this->channex_host,
+                        "Content-Type: application/json",
+                        "user-api-key: ".$token
+                    );
 
-    			    // $headers = array(
-    	       //           "Authorization: Bearer " . $token,
-    	       //           "Content-Type: application/json"
-    	       // );
-                $headers = array(
-                    "Host: ".$this->channex_host,
-                    "Content-Type: application/json",
-                    "user-api-key: ".$token
+                    if(function_exists('retrieve_booking')){ // retrieve_booking function from Channex PCI helper
+                        $booking_response = retrieve_booking($api_url.$method, $headers, 'POST', array());
+                        $is_pci_booking = true;
+                    } else {
+                        $response = $this->channexintegration->get_bookings($property_id, $token); // get_bookings function from channex integration library 
+                        $booking_response = json_decode($response);
+                        $is_pci_booking = false;
+                    }
 
-                );
-
-                if(function_exists('retrieve_booking')){ // retrieve_booking function from Channex PCI helper
-                    $booking_response = retrieve_booking($api_url.$method, $headers, 'POST', array());
-                    $is_pci_booking = true;
+                    $this->save_logs($property_id, 2, 0, $api_url.$method, json_encode($booking_response));
                 } else {
-                    $response = $this->channexintegration->get_bookings($property_id, $token); // get_bookings function from channex integration library 
-                    $booking_response = json_decode($response);
-                    $is_pci_booking = false;
+                    $is_error = true;
+                    $error_cause = 'property_not_found';
                 }
-
-                $this->save_logs($property_id, 2, 0, $api_url.$method, json_encode($booking_response));
+            } else {
+                $is_error = true;
+                $error_cause = 'token_not_found';
             }
         }
 
@@ -188,11 +190,9 @@ class Channex_bookings extends MY_Controller
                 
                 $property_id = $reservation->property_id;
 
-
                 $raw_message = isset($reservation->raw_message) ? json_decode($reservation->raw_message, true) : null;
 
                 $comment = $CommissionPayableAmount = $CommissionAmount = $CommissionCurrencyCode = $CommissionDecimalPlace = "";
-
 
                 if($raw_message){
                     if(isset($raw_message['ResGlobalInfo']['TotalCommissions']) && $raw_message['ResGlobalInfo']['TotalCommissions']){
@@ -202,6 +202,13 @@ class Channex_bookings extends MY_Controller
                         $CommissionCurrencyCode = $raw_message['ResGlobalInfo']['TotalCommissions']['CommissionPayableAmount']['currency_code'];
                         $CommissionDecimalPlace = $raw_message['ResGlobalInfo']['TotalCommissions']['CommissionPayableAmount']['decimal_places'];
                     }
+                }
+
+                $channex_x_company = $this->Channex_int_model->get_channex_x_company($property_id, null, 'channex');
+
+                if(!isset($channex_x_company['ota_x_company_id']) && !$channex_x_company['ota_x_company_id']){
+                    $is_error = true;
+                    $error_cause = 'ota_x_company_id_not_found';
                 }
 
                 $channex_x_company_id = isset($channex_x_company['ota_x_company_id']) && $channex_x_company['ota_x_company_id'] ? $channex_x_company['ota_x_company_id'] : null;
@@ -218,6 +225,11 @@ class Channex_bookings extends MY_Controller
                     
                         $channex_room_type_id = $room->room_type_id;
                         $minical_room_type_id = $this->Channex_int_model->get_minical_room_type_id($channex_room_type_id, $channex_x_company_id);
+
+                        if(!$minical_room_type_id){
+                            $is_error = true;
+                            $error_cause = 'minical_room_type_id_not_found';
+                        }
 
                         switch ((string)$reservation->status) {
                             case 'new':
@@ -355,11 +367,50 @@ class Channex_bookings extends MY_Controller
                             $booking_array[] = $booking_data;
                         }
                     }
+                } else {
+                    $is_error = true;
+                    $error_cause = 'rooms_not_found';
+                }
+
+                if($is_error){
+                    // email to support team
+                    $ota_id = $this->Channex_int_model->get_ota_id('channex');
+                    $email_data = array(
+                                        'property_id'       => isset($property_id) && $property_id ? $property_id : null,
+                                        'company_id'        => $company_id,
+                                        'error_cause'       => $error_cause,
+                                        'ota_x_company_id'  => $channex_x_company_id,
+                                        'ota_id'            => $ota_id,
+                                        'get_token_data'    => $token_data,
+                                        'channex_x_company' => isset($channex_x_company) && $channex_x_company ? $channex_x_company : null,
+                                        'reservation'       => isset($reservation) && $reservation ? $reservation : null,
+                                        'datetime'          => date('Y-m-d H:i:s')
+                                    );
+
+                    $error_data = $this->channexemailtemplate->send_error_alert_email($email_data);
+                    // echo $error_data['message'];
                 }
 
                 // acknowledgement bookings
                 $this->channexintegration->acknowledge_bookings($channex_booking_ack_id, $token);
             }
+        }
+
+        if($is_error){
+            // email to support team
+            $ota_id = $this->Channex_int_model->get_ota_id('channex');
+            $email_data = array(
+                                'property_id'       => isset($property_id) && $property_id ? $property_id : null,
+                                'company_id'        => $company_id,
+                                'error_cause'       => $error_cause,
+                                'ota_id'            => $ota_id,
+                                'get_token_data'    => $token_data,
+                                'channex_x_company' => isset($channex_x_company) && $channex_x_company ? $channex_x_company : null,
+                                'datetime'          => date('Y-m-d H:i:s')
+                            );
+
+            $error_data = $this->channexemailtemplate->send_error_alert_email($email_data);
+            // echo $error_data['message'];
         }
 
         $bookings_to_be_deleted = array();
@@ -375,7 +426,7 @@ class Channex_bookings extends MY_Controller
                 if(
                     (
                         isset($booking['minical_room_type_id']) &&
-                        $booking['minical_room_type_id'] 
+                        $booking['minical_room_type_id']
                         // && isset($booking['rate_plan']['minical_rate_plan_id']) && 
                         // $booking['rate_plan']['minical_rate_plan_id']
                     ) || 
@@ -961,7 +1012,7 @@ class Channex_bookings extends MY_Controller
                     }
                 }
             }
-            unset($rate_plan['minical_rate_plan_id']);
+                unset($rate_plan['minical_rate_plan_id']);
 
             // get currency_id
             $currency_id = $this->Currency_model->get_currency_id($rate_plan['currency']['currency_code']);
@@ -1034,7 +1085,7 @@ class Channex_bookings extends MY_Controller
                         $source_id = SOURCE_CHANNEX;
                         $is_new_source = false;
                     }else{
-                        $source_ids = $this->Bookings_model->get_booking_source_detail($company_id);
+                        $source_ids = $this->Channex_booking_model->get_booking_source_detail($company_id);
                         if($source_ids){
                             foreach($source_ids as $ids){
                                 if(strcmp($ids['name'], $source) == 0)
@@ -1058,7 +1109,7 @@ class Channex_bookings extends MY_Controller
             }
 
             if($is_new_source){
-                $source_id = $this->Bookings_model->create_booking_source($company_id, $source);
+                $source_id = $this->Channex_booking_model->create_booking_source($company_id, $source);
             } 
             
             // create booking
@@ -1077,7 +1128,7 @@ class Channex_bookings extends MY_Controller
                 'charge_type_id' => $rate_plan['charge_type_id'],
                 'is_ota_booking' => 1
             ); 
-            $booking_id = $this->Bookings_model->create_booking($booking_data);
+            $booking_id = $this->Channex_booking_model->create_booking($booking_data);
 
             $post_booking_data = $booking_data;
             $post_booking_data['booking_id'] = $booking_id;
@@ -1156,6 +1207,12 @@ class Channex_bookings extends MY_Controller
                 $this->Booking_room_history_model->create_booking_room_history($booking_room_history_data);
             }
 
+            $post_booking_data['room_id'] = $room_id;
+            $post_booking_data['check_in_date'] =$company_detail['enable_new_calendar'] ? $booking['check_in_date'].' '.date("H:i:s", strtotime($company_detail['default_checkin_time'])) : $booking['check_in_date'] ;
+            $post_booking_data['check_out_date'] = $company_detail['enable_new_calendar'] ? $booking['check_out_date'].' '.date("H:i:s", strtotime($company_detail['default_checkout_time'])) : $booking['check_out_date'];
+            $post_booking_data['room_type_id'] = $minical_room_type_id;
+            do_action('post.create.booking', $post_booking_data);
+
             // add staying guest if and only if staying guest's name is different from the booking customer
             if (isset($booking['staying_guest']))
             {
@@ -1219,7 +1276,7 @@ class Channex_bookings extends MY_Controller
             $this->Invoice_model->create_invoice($booking_id);
 
             
-            $this->Bookings_model->update_booking_balance($booking_id);
+            $this->Channex_booking_model->update_booking_balance($booking_id);
 
             $rt_availability = array();
             $no_rooms_available = false;
@@ -1248,13 +1305,13 @@ class Channex_bookings extends MY_Controller
         }
     }
 
-     function send_overbooking_email($booking_id, $is_non_continuous_available = true, $room_type_availability = null, $no_rooms_available = false, $company = null) {
+    function send_overbooking_email($booking_id, $is_non_continuous_available = true, $room_type_availability = null, $no_rooms_available = false, $company = null) {
        
         $result_array = $this->channexemailtemplate->send_overbooking_email($booking_id, $is_non_continuous_available, $room_type_availability, $no_rooms_available);
         if ($result_array && $result_array['success']) {
             $log_data = array(
                     'selling_date' => $company['selling_date'],
-                    'user_id' => 2, //User_id 2 is Online Reservation
+                    'user_id' => 0, // User_id 0 is System user (null null)
                     'booking_id' => $booking_id,                  
                     'date_time' => gmdate('Y-m-d H:i:s'),
                     'log' => "Overbooking alert email sent to " . $result_array['owner_email'],

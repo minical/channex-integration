@@ -29,8 +29,8 @@
             </span>
         </div>
         <div class="panel-body">
-            <?php if(isset($value['rate_plans']) && count($value['rate_plans']) > 0):
-                foreach($value['rate_plans'] as $val): ?>
+            <?php if(isset($value['rate_plans']) && count($value['rate_plans']) > 0): $i = 1;
+                foreach($value['rate_plans'] as $val):  ?>
             <div class="rate-plan">
                 <span class="channex-rate-plan" data-channex_room_type_id="<?php echo $value['room_type_id']; ?>" data-channex_rate_id="<?php echo $value['room_type_id'].'_'.$val['rate_plan_id']; ?>">
                     <?php echo $val['rate_plan_name']; ?> (<?php echo $val['rate_plan_id']; ?>)
@@ -52,12 +52,25 @@
                                 <?php    }
                                 ?>
                             </select>
+
+                            <?php if($i == 1){ ?>
+                                <label for="pricing_mode_label" class="pricing_mode_label"><?php echo l('channex_integration/Pricing Mode'); ?></label>
+                            <?php } ?>
+                            <select name="rate_type" class="channex_manager rate_type">
+                                <option value="OBP" selected >Occupancy Based Pricing</option>
+                                <option value="PRP">Per-Room Pricing</option>
+                            </select>
+                            <span style="font-size: 15px;" data-toggle="modal" data-target="#show_rate_details">
+                                <i class="fa fa-question-circle" aria-hidden="true"></i>
+                            </span>
+                                
+                            
                     <?php
                         endif;
                     ?>
                 </span>
             </div> <!-- /Rate Plans -->
-        <?php endforeach; endif; ?>
+        <?php $i++; endforeach; endif; ?>
         </div>
     </div>
 <?php endforeach; ?>

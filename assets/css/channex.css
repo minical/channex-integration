@@ -1,0 +1,13 @@
+select.channex_manager{
+    padding: 5px;
+    margin: 0px 5px;
+}
+
+.rate-plan {
+ 	margin: 10px 0px;
+}
+
+.pricing_mode_label{
+	margin: -23px 4px;
+    position: absolute;
+}

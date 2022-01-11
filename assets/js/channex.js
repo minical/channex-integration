@@ -119,7 +119,8 @@ $(document).ready(function(){
             var minRPId = $(this).find('select[name="minical_rate_plan"]').val();
                 mappingDataRP.push({
                     "channex_rate_plan_id": $(this).find('.channex-rate-plan').data('channex_rate_id'),
-                    "minical_rate_plan_id": $(this).find('select[name="minical_rate_plan"]').val()
+                    "minical_rate_plan_id": $(this).find('select[name="minical_rate_plan"]').val(),
+                    "rate_update_type": $(this).find('select[name="rate_type"]').val()
                 });
         });
         

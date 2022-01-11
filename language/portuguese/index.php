@@ -65,4 +65,13 @@ $lang['channex_integration']['Booking created successfully'] = 'Booking created 
 $lang['channex_integration']['Please enter valid revesion ID'] = 'Please enter valid revesion ID';
 $lang['channex_integration']['Note'] = 'Note';
 $lang['channex_integration']['You can find the <b>Booking Revision ID</b> from your channex account.<br/>Login to Channex account -> Select Property -> Bookings -> Click on View link for particular booking.<br/> Ex. Revision ID: d5a876f8-xxxx-xxxx-xxxx-4c75a3c2b5a0'] = 'You can find the <b>Booking Revision ID</b> from your channex account.<br/>Login to Channex account -> Select Property -> Bookings -> Click on View link for particular booking.<br/> Ex. Revision ID: d5a876f8-xxxx-xxxx-xxxx-4c75a3c2b5a0';
+$lang['channex_integration']['Pricing Mode'] = 'Pricing Mode';
+$lang['channex_integration']['Pricing Mode Description'] = 'Pricing Mode Description';
+$lang['channex_integration']['Per room pricing model allows miniCal to send a base rate for the room (Adult 2 rate is considered the base rate)'] = 'Per room pricing model allows miniCal to send a base rate for the room (Adult 2 rate is considered the base rate)';
+$lang['channex_integration']['Title'] = 'Title';
+$lang['channex_integration']['Description'] = 'Description';
+$lang['channex_integration']['Per-Room Pricing (PRP)'] = 'Per-Room Pricing (PRP)';
+$lang['channex_integration']['Per room pricing model allows miniCal to send a base rate for the room (Adult 2 rate is considered the base rate)'] = 'Per room pricing model allows miniCal to send a base rate for the room (Adult 2 rate is considered the base rate)';
+$lang['channex_integration']['Occupancy Based Pricing (OBP)'] = 'Occupancy Based Pricing (OBP)';
+$lang['channex_integration']['OBP pricing model (Occupancy based pricing) allows miniCal to send rates for each occupancy. '] = '                                                For example, if a room can accommodate 4 persons, miniCal would send rates for 1 person (Adult 1 rate), 2 persons (Adult 2 rate), 3 persons (Adult 3 rate), and 4 persons (Adult 4 rate) separately.';
 ?>

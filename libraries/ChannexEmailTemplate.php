@@ -8,7 +8,7 @@ class ChannexEmailTemplate {
 
         $this->module_name = 'channex_integration';
 
-        $this->ci->load->model('../extensions/'.$this->module_name.'/models/Booking_model');
+        $this->ci->load->model('../extensions/'.$this->module_name.'/models/Channex_booking_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Booking_room_history_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Rooms_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Room_type_model');
@@ -43,15 +43,15 @@ class ChannexEmailTemplate {
 
     function send_booking_confirmation_email($booking_id, $booking_type)
     {
-        $booking_data = $this->ci->Booking_model->get_booking_detail($booking_id);
-        $company_id = $this->ci->Booking_model->get_company_id($booking_id);
+        $booking_data = $this->ci->Channex_booking_model->get_booking_detail($booking_id);
+        $company_id = $this->ci->Channex_booking_model->get_company_id($booking_id);
         $company = $this->ci->Company_model->get_company($company_id);
 
         $this->set_language($company['default_language']);
 
         $booking_room_history_data = $this->ci->Booking_room_history_model->get_booking_detail($booking_id);
         $room_data = $this->ci->Room_model->get_room($booking_room_history_data['room_id']);
-        $customer_data['staying_customers'] = $this->ci->Booking_model->get_booking_staying_customers($booking_id, $company_id);
+        $customer_data['staying_customers'] = $this->ci->Channex_booking_model->get_booking_staying_customers($booking_id, $company_id);
 
         $number_of_nights = (strtotime($booking_room_history_data['check_out_date']) - strtotime($booking_room_history_data['check_in_date']))/(60*60*24);
 
@@ -386,15 +386,15 @@ class ChannexEmailTemplate {
 
     function send_booking_alert_email($booking_id, $booking_type)
     {
-        $booking_data = $this->ci->Booking_model->get_booking_detail($booking_id);
-        $company_id = $this->ci->Booking_model->get_company_id($booking_id);
+        $booking_data = $this->ci->Channex_booking_model->get_booking_detail($booking_id);
+        $company_id = $this->ci->Channex_booking_model->get_company_id($booking_id);
         $company = $this->ci->Company_model->get_company($company_id);
 
         $this->set_language($company['default_language']);
 
         $booking_room_history_data = $this->ci->Booking_room_history_model->get_booking_detail($booking_id);
         $room_data = $this->ci->Room_model->get_room($booking_room_history_data['room_id']);
-        $customer_data['staying_customers'] = $this->ci->Booking_model->get_booking_staying_customers($booking_id, $company_id);
+        $customer_data['staying_customers'] = $this->ci->Channex_booking_model->get_booking_staying_customers($booking_id, $company_id);
 
         $number_of_nights = (strtotime($booking_room_history_data['check_out_date']) - strtotime($booking_room_history_data['check_in_date']))/(60*60*24);
 
@@ -722,7 +722,7 @@ class ChannexEmailTemplate {
 
     function send_booking_cancellation_email($booking_id)
     {
-        $booking = $this->ci->Booking_model->get_booking_detail($booking_id);
+        $booking = $this->ci->Channex_booking_model->get_booking_detail($booking_id);
 
         if (!$booking['booking_customer_email']) {
 
@@ -731,7 +731,7 @@ class ChannexEmailTemplate {
             );
         }
 
-        $company_id = $this->ci->Booking_model->get_company_id($booking_id);
+        $company_id = $this->ci->Channex_booking_model->get_company_id($booking_id);
         $booking_room_history_data = $this->ci->Booking_room_history_model->get_booking_detail($booking_id);
         $room_data = $this->ci->Room_model->get_room($booking_room_history_data['room_id']);
         $room_type = $this->ci->Room_type_model->get_room_type($room_data['room_type_id']);
@@ -796,8 +796,11 @@ class ChannexEmailTemplate {
     function send_overbooking_email($booking_id, $is_non_continuous_available = true, $room_type_availability = null, $no_rooms_available = false)
     {       
 
+        $whitelabelinfo = $this->ci->session->userdata('white_label_information');
+
+        $company_support_email = $whitelabelinfo && isset($whitelabelinfo['support_email']) && $whitelabelinfo['support_email'] ? $whitelabelinfo['support_email'] : 'support@minical.io';
       
-        $booking_data = $this->ci->Booking_model->get_booking($booking_id);
+        $booking_data = $this->ci->Channex_booking_model->get_booking($booking_id);
         $company_id = $booking_data['company_id'];
         $company = $this->ci->Company_model->get_company($company_id);
 
@@ -838,9 +841,8 @@ class ChannexEmailTemplate {
             'no_rooms_available' => $no_rooms_available
         );
 
-
-        $this->ci->email->from('support@roomsy.com');
-  
+        $this->ci->email->from($company_support_email);
+      
         // don't send emails unless in production environment
         if (strtolower($_SERVER['HTTP_HOST']) == 'app.minical.io')
         {
@@ -848,6 +850,9 @@ class ChannexEmailTemplate {
             {
                 $this->ci->email->to($company['email']);
                 $this->ci->email->cc('pankaj@minical.io');
+                if($whitelabelinfo && isset($whitelabelinfo['overbooking_alert_email']) && $whitelabelinfo['overbooking_alert_email']){
+                    $this->ci->email->cc($whitelabelinfo['overbooking_alert_email']);
+                }
             }   
         }
         else
@@ -855,7 +860,7 @@ class ChannexEmailTemplate {
             $this->ci->email->to('pankaj@minical.io');
         }
 
-        $this->ci->email->reply_to('support@minical.io');
+        $this->ci->email->reply_to($company_support_email);
         
         $this->ci->email->subject('Overbooking alert | ' . $email_data['company_name']);
         $this->ci->email->message($this->ci->load->view('../extensions/'.$this->module_name.'/views/over_booking_html', $email_data, true));
@@ -865,5 +870,31 @@ class ChannexEmailTemplate {
         $this->reset_language($company['default_language']);
 
         return array('success' => true, 'owner_email' => $company['email']);
+    }
+
+    function send_error_alert_email($email_data){
+
+        $whitelabelinfo = $this->ci->session->userdata('white_label_information');
+
+        $company_support_email = $whitelabelinfo && isset($whitelabelinfo['support_email']) && $whitelabelinfo['support_email'] ? $whitelabelinfo['support_email'] : 'support@minical.io';
+         
+        $company = $this->ci->Company_model->get_company($email_data['company_id']);
+
+        $email_data['company_name'] = $company['name'];
+
+        $this->ci->email->from($company_support_email);
+
+        $this->ci->email->to('pankaj@minical.io');
+        $this->ci->email->cc('mradul.jain90@gmail.com');
+
+        $this->ci->email->subject('Error alert | ' . $company['name']);
+
+        $this->ci->email->message($this->ci->load->view('../extensions/'.$this->module_name.'/views/error_alert-html', $email_data, true));
+       
+        $this->ci->email->send();
+    
+        $this->reset_language($company['default_language']);
+
+        return array('success' => true, 'message' => 'Error eamil sent.');
     }
 }

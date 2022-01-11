@@ -94,7 +94,7 @@
 			<br />
 
 			<?php echo l('Thanks & Regards', true); ?> <br />
-			Roomsy
+			Minical
 		</div>
 	</body>
 </html>

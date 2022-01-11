@@ -83,6 +83,26 @@ class Channex_int_model extends CI_Model {
         return null;
     }
 
+    function get_ota_id($ota_key){
+        $this->db->from('otas');
+        $this->db->where('key', $ota_key);
+
+        $query = $this->db->get();
+
+        $result = $query->row_array();
+        
+        if ($this->db->_error_message())
+        {
+            show_error($this->db->_error_message());
+        }
+        
+        if ($query->num_rows >= 1)
+        {
+            return $result['id'];
+        }
+        return null;
+    }
+
     function get_channex_data($company_id, $ota_key = null){
         $this->db->select('om.*');
         $this->db->from('ota_manager as om');
@@ -284,16 +304,17 @@ class Channex_int_model extends CI_Model {
         }
     }
 
-    function create_or_update_rate_plan($ota_x_company_id, $ota_room_type_id, $minical_rate_plan_id, $ota_rate_plan_id, $company_id)
+    function create_or_update_rate_plan($ota_x_company_id, $ota_room_type_id, $minical_rate_plan_id, $ota_rate_plan_id, $company_id, $rate_update_type)
     {
         if($this->get_rate_plan($ota_x_company_id, $ota_room_type_id, $minical_rate_plan_id, $ota_rate_plan_id)){
-            return $this->update_rate_plan($ota_x_company_id, $ota_room_type_id, $minical_rate_plan_id, $ota_rate_plan_id, $company_id);
+            return $this->update_rate_plan($ota_x_company_id, $ota_room_type_id, $minical_rate_plan_id, $ota_rate_plan_id, $company_id, $rate_update_type);
         } else {
             $data = array (
                 'ota_x_company_id' => $ota_x_company_id,
                 'ota_room_type_id' => $ota_room_type_id,
                 'minical_rate_plan_id' => $minical_rate_plan_id,
                 'ota_rate_plan_id' => $ota_rate_plan_id,
+                'rate_update_type' => $rate_update_type,
                 'company_id' => $company_id
             );
 
@@ -308,7 +329,7 @@ class Channex_int_model extends CI_Model {
         
     }
     
-    function update_rate_plan($ota_x_company_id, $ota_room_type_id, $minical_rate_plan_id, $ota_rate_plan_id, $company_id)
+    function update_rate_plan($ota_x_company_id, $ota_room_type_id, $minical_rate_plan_id, $ota_rate_plan_id, $company_id, $rate_update_type)
     {
         $this->db->where('ota_x_company_id', $ota_x_company_id);
         $this->db->where('ota_room_type_id', $ota_room_type_id);
@@ -319,7 +340,8 @@ class Channex_int_model extends CI_Model {
             'ota_x_company_id' => $ota_x_company_id,
             'ota_room_type_id' => $ota_room_type_id,
             'minical_rate_plan_id' => $minical_rate_plan_id,
-            'ota_rate_plan_id' => $ota_rate_plan_id
+            'ota_rate_plan_id' => $ota_rate_plan_id,
+            'rate_update_type' => $rate_update_type
         );
         $data = (object) $data;
         $this->db->update('ota_rate_plans', $data);
@@ -373,6 +395,7 @@ class Channex_int_model extends CI_Model {
 
     function get_channex_rate_plans($company_id, $ota_manager_id)
     {
+        $this->db->select('orp.*, oxc.*, orp.rate_update_type as rate_type');      
         $this->db->from('ota_rate_plans as orp, ota_x_company as oxc');      
         $this->db->where('orp.ota_x_company_id = oxc.ota_x_company_id');
         $this->db->where('oxc.is_active = 1');

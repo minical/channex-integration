@@ -259,6 +259,7 @@ class Channex_integration extends MY_Controller
         				foreach ($value1['rate_plans'] as $key2 => $value2) {
         					if($value['ota_rate_plan_id'] == $value2['rate_plan_id']){
         						$data['channex_room_types_rate_plans'][$key1]['rate_plans'][$key2]['minical_rate_plan_id'] = $value['minical_rate_plan_id'];
+        						$data['channex_room_types_rate_plans'][$key1]['rate_plans'][$key2]['rate_update_type'] = $value['rate_type'];
         					}
         				}
         			}
@@ -268,7 +269,7 @@ class Channex_integration extends MY_Controller
 
         $data['is_mapping'] = $is_mapping;
         $data['channex_id'] = $channex_id;
-        
+
         $this->template->load('bootstrapped_template', null , $data['main_content'], $data);
 	}
 
@@ -352,7 +353,7 @@ class Channex_integration extends MY_Controller
         	$channex_company_data = array(
         							'company_id' => $this->company_id,
         							'ota_property_id' => $property_id,
-        							'rate_update_type' => $rate_type
+        							// 'rate_update_type' => $rate_type
         						);
         
         	$this->Channex_int_model->save_channex_company($channex_company_data, true);
@@ -362,7 +363,7 @@ class Channex_integration extends MY_Controller
         							'ota_manager_id' => $channex_id,
         							'ota_property_id' => $property_id,
         							'is_active' => 1,
-        							'rate_update_type' => $rate_type
+        							// 'rate_update_type' => $rate_type
         						);
         
         	$channex_x_company_id = $this->Channex_int_model->save_channex_company($channex_company_data);
@@ -376,6 +377,7 @@ class Channex_integration extends MY_Controller
         		if($value['channex_room_type_id'] == $rt_rp_id[0]){
         			$mapping_data[$key]['rate_plan'][$key1]['channex_rate_plan_id'] = $rt_rp_id[1];
         			$mapping_data[$key]['rate_plan'][$key1]['minical_rate_plan_id'] = $val['minical_rate_plan_id'];
+        			$mapping_data[$key]['rate_plan'][$key1]['rate_update_type'] = $val['rate_update_type'];
         		}
         	}
         }
@@ -391,8 +393,9 @@ class Channex_integration extends MY_Controller
         		foreach ($mapping['rate_plan'] as $key => $value) {
 	        		$minical_rate_plan_id = isset($value['minical_rate_plan_id']) ? $value['minical_rate_plan_id'] : null;
 	        		$channex_rate_plan_id = isset($value['channex_rate_plan_id']) ? $value['channex_rate_plan_id'] : null;
+	        		$rate_update_type = isset($value['rate_update_type']) ? $value['rate_update_type'] : null;
 
-	        		$this->Channex_int_model->create_or_update_rate_plan($channex_x_company_id, $channex_room_type_id, $minical_rate_plan_id, $channex_rate_plan_id, $this->company_id);
+	        		$this->Channex_int_model->create_or_update_rate_plan($channex_x_company_id, $channex_room_type_id, $minical_rate_plan_id, $channex_rate_plan_id, $this->company_id, $rate_update_type);
 	        	}
         	}
         }

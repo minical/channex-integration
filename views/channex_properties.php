@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <div class="col-md-6" style="margin: 1px;">
+        <!-- <div class="col-md-6" style="margin: 1px;">
             <div class="position-relative form-group">
                 <label for="exampleZip" class=""><?php echo l('channex_integration/Rate Update Type'); ?></label>
                 <select name="rate_type" class="form-control rate_type">
@@ -32,7 +32,7 @@
                     <option value="PRP" <?php if($channex_room_types[0]['rate_update_type'] == 'PRP') { echo 'selected'; } ?> >Per-Room Pricing</option>
                 </select>
             </div>
-        </div>
+        </div> -->
 
         <?php else: ?>
 
@@ -53,20 +53,12 @@
         </div>
 
 
-        <div class="col-md-6">
-            <div class="position-relative form-group">
-                <label for="exampleZip" class=""><?php echo l('channex_integration/Rate Update Type'); ?></label>
-                <select name="rate_type" class="form-control rate_type">
-                    <option value="OBP" selected >Occupancy Based Pricing</option>
-                    <option value="PRP">Per-Room Pricing</option>
-                </select>
-            </div>
-        </div>
+        
 
     <?php endif; ?>
 
     <?php if (isset($channex_room_types_rate_plans) && count($channex_room_types_rate_plans) > 0): ?>
-        <button type="button" class='btn btn-success full-sync-channex pull-right' channex_id="<?=$channex_id;?>"><?php echo l("Full Sync");?></button>
+        <button type="button" class='btn btn-success full-sync-channex pull-right' channex_id="<?=$channex_id;?>"><?php echo l("channex_integration/Full Sync");?></button>
     <?php endif; ?>
 
     <form class="save_channex_mapping" >
@@ -100,7 +92,7 @@
             </span>
         </div>
         <div class="panel-body">
-            <?php if(isset($value['rate_plans']) && count($value['rate_plans']) > 0):
+            <?php if(isset($value['rate_plans']) && count($value['rate_plans']) > 0): $i = 1;
                 foreach($value['rate_plans'] as $val): ?>
             <div class="rate-plan">
                 <span class="channex-rate-plan" data-channex_room_type_id="<?php echo $value['room_type_id']; ?>" data-channex_rate_id="<?php echo $value['room_type_id'].'_'.$val['rate_plan_id']; ?>">
@@ -123,12 +115,23 @@
                                 <?php    }
                                 ?>
                             </select>
+
+                            <?php if($i == 1){ ?>
+                                <label for="pricing_mode_label" class="pricing_mode_label"><?php echo l('channex_integration/Pricing Mode'); ?></label>
+                            <?php } ?>
+                            <select name="rate_type" class="channex_manager rate_type">
+                                <option value="OBP" <?php if($val['rate_update_type'] == 'OBP') { echo 'selected'; } ?> >Occupancy Based Pricing</option>
+                                <option value="PRP" <?php if($val['rate_update_type'] == 'PRP') { echo 'selected'; } ?> >Per-Room Pricing</option>
+                            </select>
+                            <span style="font-size: 15px;" data-toggle="modal" data-target="#show_rate_details">
+                                <i class="fa fa-question-circle" aria-hidden="true"></i>
+                            </span>
                     <?php
                         endif;
                     ?>
                 </span>
             </div> <!-- /Rate Plans -->
-        <?php endforeach; endif; ?>
+        <?php $i++; endforeach; endif; ?>
         </div>
     </div>
 <?php endforeach;  ?>
@@ -142,4 +145,51 @@
 
         </form>
     </div>
+</div>
+
+
+<div class="modal fade"  id="show_rate_details" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="z-index:11111;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title"><?php echo l('channex_integration/Pricing Mode Description'); ?></h4>
+            </div>
+            <div class="modal-body form-horizontal">
+                <div class="form-group" id="option-to-add-multiple-payments">
+                    <div class="col-sm-12">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover tax-price-brackets-table" >
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;"><?php echo l('channex_integration/Title', true); ?></th>
+                                        <th><?php echo l('channex_integration/Description', true); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <?php echo l('channex_integration/Per-Room Pricing (PRP)', true); ?>
+                                        </td>
+                                        <td>
+                                            <?php echo l('channex_integration/Per room pricing model allows miniCal to send a base rate for the room (Adult 2 rate is considered the base rate)', true); ?>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <?php echo l('channex_integration/Occupancy Based Pricing (OBP)', true); ?>
+                                        </td>
+                                        <td>
+                                            <?php echo l('channex_integration/OBP pricing model (Occupancy based pricing) allows miniCal to send rates for each occupancy. 
+                                                For example, if a room can accommodate 4 persons, miniCal would send rates for 1 person (Adult 1 rate), 2 persons (Adult 2 rate), 3 persons (Adult 3 rate), and 4 persons (Adult 4 rate) separately.', true); ?>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
 </div>
