@@ -384,8 +384,8 @@ class Channex_integration extends MY_Controller
         		$rt_rp_id = explode('_', $rtrp_id);
         		if($value['channex_room_type_id'] == $rt_rp_id[0]){
         			$mapping_data[$key]['rate_plan'][$key1]['channex_rate_plan_id'] = $rt_rp_id[1];
-        			$mapping_data[$key]['rate_plan'][$key1]['minical_rate_plan_id'] = $val['minical_rate_plan_id'];
-        			$mapping_data[$key]['rate_plan'][$key1]['rate_update_type'] = $val['rate_update_type'];
+        			$mapping_data[$key]['rate_plan'][$key1]['minical_rate_plan_id'] = isset($val['minical_rate_plan_id']) && $val['minical_rate_plan_id'] ? $val['minical_rate_plan_id'] : null;
+        			$mapping_data[$key]['rate_plan'][$key1]['rate_update_type'] = isset($val['rate_update_type']) && $val['rate_update_type'] ? $val['rate_update_type'] : null;
         		}
         	}
         }
@@ -409,7 +409,6 @@ class Channex_integration extends MY_Controller
         }
 
         $this->update_full_refresh();
-		
 		echo json_encode(array('success' => true));
 	}
 
