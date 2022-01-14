@@ -367,6 +367,7 @@ class ChannexEmailTemplate {
 
         $email_from = $company['email'];
 
+        $this->ci->email->clear();
         $this->ci->email->from($email_from, $company['name']);
         $this->ci->email->to($email_list);
         $this->ci->email->reply_to($email_data['company_email']);
@@ -777,6 +778,7 @@ class ChannexEmailTemplate {
 
         $email_from = $company['email'];
 
+        $this->ci->email->clear();
         $this->ci->email->from($email_from, $company['name']);
         $this->ci->email->to($customer_email);
         $this->ci->email->reply_to($email_data['company_email']);
@@ -841,6 +843,7 @@ class ChannexEmailTemplate {
             'no_rooms_available' => $no_rooms_available
         );
 
+        $this->ci->email->clear();
         $this->ci->email->from($company_support_email);
       
         // don't send emails unless in production environment
@@ -854,10 +857,6 @@ class ChannexEmailTemplate {
                     $this->ci->email->cc($whitelabelinfo['overbooking_alert_email']);
                 }
             }   
-        }
-        else
-        {
-            $this->ci->email->to('pankaj@minical.io');
         }
 
         $this->ci->email->reply_to($company_support_email);
@@ -882,9 +881,13 @@ class ChannexEmailTemplate {
 
         $email_data['company_name'] = $company['name'];
 
+        $this->ci->email->clear();
         $this->ci->email->from($company_support_email);
 
-        $this->ci->email->to('pankaj@minical.io');
+        if (strtolower($_SERVER['HTTP_HOST']) == 'app.minical.io') {
+            $this->ci->email->to('pankaj@minical.io');
+        }
+
         $this->ci->email->cc('mradul.jain90@gmail.com');
 
         $this->ci->email->subject('Error alert | ' . $company['name']);
