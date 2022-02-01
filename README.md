@@ -20,6 +20,7 @@ This extension helps integrate miniCal with Channex to connect to OTA's like Boo
 * Upload the extension folder into the /public/application/extensions directory.
 * Activate the extension through the "Extensions" screen in miniCal.
 * Click on the setting icon. It will redirect you to the Channex setting page. Fill in all the details, and map rooms with rate-plan then you are good to go.
+* Retrieve Bookings from Channex Automatically: To automatically fetch booking from Channex, you need to set a cron job on your server. Hit following URL every minute or every 30 seconds (Whatever you prefer) using cron to retrieve bookings automatically: https://app.minical.io/cron/ota_booking_retrieval
 
 <img src="https://snipboard.io/NkMWRi.jpg" alt=""> 
 <img src="https://snipboard.io/mQay3S.jpg" alt=""> 

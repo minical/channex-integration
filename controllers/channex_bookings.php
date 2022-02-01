@@ -130,7 +130,10 @@ class Channex_bookings extends MY_Controller
             //  $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
             // }
 
+            $token_data = null;
+            if(isset($get_token_data['meta_data']) && $get_token_data['meta_data']) {
             $token_data = json_decode($get_token_data['meta_data']);
+            }
 
             // if($token_data && isset($token_data->data) && $token_data->data && isset($token_data->data->attributes) && $token_data->data->attributes && isset($token_data->data->attributes->token) && $token_data->data->attributes->token){
 

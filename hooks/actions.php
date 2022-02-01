@@ -287,10 +287,12 @@ function update_rates_batch ($start_date, $end_date, $data) {
     $ota_x_company_id = $channex_x_company['ota_x_company_id'];
 
     $is_error = false;
+    $is_error_send = false;
     $error_cause = '';
     $email_data = array();
 
     if($rate_plan_id) {
+        $is_error_send = true;
         $rate_plan_data = $CI->Channex_int_model->get_channex_rate_plans_by_id($rate_plan_id, $CI->company_id, $ota_x_company_id);
 
         $rates = $data;
@@ -385,6 +387,11 @@ function update_rates_batch ($start_date, $end_date, $data) {
                 if(isset($rate_plan['minical_rate_plan_id']) && $rate_plan['minical_rate_plan_id']){
 
                     $rate_plan_id = $rate_plan['minical_rate_plan_id'];
+
+                    if($rate_plan_id){
+                        $is_error_send = true;
+                    }
+
                     $minical_rates[] = $CI->Rates_model->get_rates(
                                                         $rate_plan_id, 
                                                         $get_ota['ota_id'],
@@ -522,7 +529,7 @@ function update_rates_batch ($start_date, $end_date, $data) {
         $error_cause = 'rates_token_not_found';
     }
 
-    if($is_error){
+    if($is_error && $is_error_send){ 
             // email to support team
             $email_data = array(
                                 'property_id'       => $property_id,

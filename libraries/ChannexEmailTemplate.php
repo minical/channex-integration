@@ -18,6 +18,7 @@ class ChannexEmailTemplate {
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Rates_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Image_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Booking_source_model');
+        $this->ci->load->model('Whitelabel_partner_model');
 
         $this->ci->load->library('Email');
         $this->ci->load->helper('date_format_helper');
@@ -798,13 +799,18 @@ class ChannexEmailTemplate {
     function send_overbooking_email($booking_id, $is_non_continuous_available = true, $room_type_availability = null, $no_rooms_available = false)
     {       
 
-        $whitelabelinfo = $this->ci->session->userdata('white_label_information');
-
-        $company_support_email = $whitelabelinfo && isset($whitelabelinfo['support_email']) && $whitelabelinfo['support_email'] ? $whitelabelinfo['support_email'] : 'support@minical.io';
-      
         $booking_data = $this->ci->Channex_booking_model->get_booking($booking_id);
         $company_id = $booking_data['company_id'];
         $company = $this->ci->Company_model->get_company($company_id);
+
+        $whitelabelinfo = null;
+        $white_label_detail = $this->ci->Whitelabel_partner_model->get_partners(array('id' => $company['partner_id']));
+        
+        if($white_label_detail && isset($white_label_detail[0])) {
+            $whitelabelinfo = $white_label_detail[0];
+        }
+
+        $company_support_email = $whitelabelinfo && isset($whitelabelinfo['support_email']) && $whitelabelinfo['support_email'] ? $whitelabelinfo['support_email'] : 'support@minical.io';
 
         $this->set_language($company['default_language']);
 
@@ -851,11 +857,13 @@ class ChannexEmailTemplate {
         {
             if (isset($company['email']))
             {
+                $cc_list = 'pankaj@minical.io';
                 $this->ci->email->to($company['email']);
-                $this->ci->email->cc('pankaj@minical.io');
                 if($whitelabelinfo && isset($whitelabelinfo['overbooking_alert_email']) && $whitelabelinfo['overbooking_alert_email']){
-                    $this->ci->email->cc($whitelabelinfo['overbooking_alert_email']);
+                    $cc_list .= ",".$whitelabelinfo['overbooking_alert_email'];
+                    
                 }
+                $this->ci->email->cc($cc_list);
             }   
         }
 
