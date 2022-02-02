@@ -138,7 +138,7 @@ class ChannexIntegration
     public function get_room_types($property_id, $token){
 
         $api_url = $this->channex_url;
-        $method = '/api/v1/room_types?filter[property_id]='.$property_id;
+        $method = '/api/v1/room_types?pagination[limit]=100&filter[property_id]='.$property_id;
         $method_type = 'GET';
 
         $data = array();
