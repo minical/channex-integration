@@ -291,94 +291,110 @@ function update_rates_batch ($start_date, $end_date, $data) {
     $error_cause = '';
     $email_data = array();
 
-    if($rate_plan_id) {
-        $is_error_send = true;
-        $rate_plan_data = $CI->Channex_int_model->get_channex_rate_plans_by_id($rate_plan_id, $CI->company_id, $ota_x_company_id);
+    $get_ota = $CI->Channex_int_model->get_channex_data($CI->company_id, 'channex');
 
-        $rates = $data;
-        $rate_array['values'] = $rate_data = $restriction_data = array();
-        if($property_id && $rate_plan_data){
+    // if($rate_plan_id) {
+    //     $is_error_send = true;
+    //     $rate_plan_data = $CI->Channex_int_model->get_channex_rate_plans_by_id($rate_plan_id, $CI->company_id, $ota_x_company_id);
 
-            foreach ($rate_plan_data as $key => $value) {
-                if($value['minical_rate_plan_id'] == $rate_plan_id){
-                    $rate_data[$key] =  array(
-                                'date_from' => date('Y-m-d', strtotime($start_date)),
-                                'date_to' => date('Y-m-d', strtotime($end_date)),
-                                'property_id' => $property_id,
-                                'rate_plan_id' => $value['ota_rate_plan_id']
-                            );
-                    if(isset($rates['minimum_length_of_stay']) && $rates['minimum_length_of_stay'] != 'null' && $rates['minimum_length_of_stay'] != '0'){
-                        $rate_data[$key]['min_stay_arrival'] = intval($rates['minimum_length_of_stay']);
-                    }
+    //     // $rates = $data;
+    //     $rates = $CI->Rates_model->get_rates(
+    //                                         $rate_plan_id, 
+    //                                         $get_ota['ota_id'],
+    //                                         $start_date, 
+    //                                         $end_date
+    //                                     );
 
-                    if(isset($rates['minimum_length_of_stay']) && $rates['minimum_length_of_stay'] != 'null' && $rates['minimum_length_of_stay'] != '0'){
-                        $rate_data[$key]['min_stay_through'] = intval($rates['minimum_length_of_stay']);
-                    }
+    //     prx($rates);
 
-                    if(isset($rates['maximum_length_of_stay']) && $rates['maximum_length_of_stay'] != 'null' && $rates['maximum_length_of_stay'] != '0'){
-                        $rate_data[$key]['max_stay'] = intval($rates['maximum_length_of_stay']);
-                    }
-                    if(isset($rates['closed_to_arrival']) && $rates['closed_to_arrival'] == 0){
-                        $rate_data[$key]['closed_to_arrival'] = false;
-                    } 
-                    else if(isset($rates['closed_to_arrival']) && $rates['closed_to_arrival'] == 1){
-                        $rate_data[$key]['closed_to_arrival'] = true;
-                    }
-                    if(isset($rates['closed_to_departure']) && $rates['closed_to_departure'] == 0){
-                        $rate_data[$key]['closed_to_departure'] = false;
-                    }
-                    else if(isset($rates['closed_to_departure']) && $rates['closed_to_departure'] == 1){
-                        $rate_data[$key]['closed_to_departure'] = true;
-                    }
-                    if(isset($rates['can_be_sold_online']) && $rates['can_be_sold_online'] == 1){
-                        $rate_data[$key]['stop_sell'] = false;
-                    }
-                    else if(isset($rates['can_be_sold_online']) && $rates['can_be_sold_online'] == 0){
-                        $rate_data[$key]['stop_sell'] = true;
-                    }
-                } 
-            }
+    //     $rates = $rates[0];
 
-            $room_type_detail = $CI->Channex_int_model->get_room_type_by_rate_plan_id($rate_plan_id);
 
-            $room_maximum_occupancy = $room_type_detail['max_occupancy'];
+    //     $rate_array['values'] = $rate_data = $restriction_data = array();
+    //     if($property_id && $rate_plan_data){
 
-            if($channex_x_company['rate_update_type'] == 'OBP'){
-                foreach ($rate_data as $key => $value) {
+    //         foreach ($rate_plan_data as $key => $value) {
+    //             if($value['minical_rate_plan_id'] == $rate_plan_id){
+    //                 $rate_data[$key] =  array(
+    //                             'date_from' => date('Y-m-d', strtotime($start_date)),
+    //                             'date_to' => date('Y-m-d', strtotime($end_date)),
+    //                             'property_id' => $property_id,
+    //                             'rate_plan_id' => $value['ota_rate_plan_id']
+    //                         );
+    //                 if(isset($rates['minimum_length_of_stay']) && $rates['minimum_length_of_stay'] != 'null' && $rates['minimum_length_of_stay'] != '0'){
+    //                     $rate_data[$key]['min_stay_arrival'] = intval($rates['minimum_length_of_stay']);
+    //                 }
+
+    //                 if(isset($rates['minimum_length_of_stay']) && $rates['minimum_length_of_stay'] != 'null' && $rates['minimum_length_of_stay'] != '0'){
+    //                     $rate_data[$key]['min_stay_through'] = intval($rates['minimum_length_of_stay']);
+    //                 }
+
+    //                 if(isset($rates['maximum_length_of_stay']) && $rates['maximum_length_of_stay'] != 'null' && $rates['maximum_length_of_stay'] != '0'){
+    //                     $rate_data[$key]['max_stay'] = intval($rates['maximum_length_of_stay']);
+    //                 }
+    //                 if(isset($rates['closed_to_arrival']) && $rates['closed_to_arrival'] == 0){
+    //                     $rate_data[$key]['closed_to_arrival'] = false;
+    //                 } 
+    //                 else if(isset($rates['closed_to_arrival']) && $rates['closed_to_arrival'] == 1){
+    //                     $rate_data[$key]['closed_to_arrival'] = true;
+    //                 }
+    //                 if(isset($rates['closed_to_departure']) && $rates['closed_to_departure'] == 0){
+    //                     $rate_data[$key]['closed_to_departure'] = false;
+    //                 }
+    //                 else if(isset($rates['closed_to_departure']) && $rates['closed_to_departure'] == 1){
+    //                     $rate_data[$key]['closed_to_departure'] = true;
+    //                 }
+    //                 if(isset($rates['can_be_sold_online']) && $rates['can_be_sold_online'] == 1){
+    //                     $rate_data[$key]['stop_sell'] = false;
+    //                 }
+    //                 else if(isset($rates['can_be_sold_online']) && $rates['can_be_sold_online'] == 0){
+    //                     $rate_data[$key]['stop_sell'] = true;
+    //                 }
+    //             } 
+    //         }
+
+    //         $room_type_detail = $CI->Channex_int_model->get_room_type_by_rate_plan_id($rate_plan_id);
+
+    //         $room_maximum_occupancy = $room_type_detail['max_occupancy'];
+
+    //         if($channex_x_company['rate_update_type'] == 'OBP'){
+    //             foreach ($rate_data as $key => $value) {
                     
-                    for($i = 1; $i <= $room_maximum_occupancy; $i++)
-                    {
-                        if (isset($rates['adult_'.$i.'_rate']) && is_numeric($rates['adult_'.$i.'_rate']))
-                        {
-                            $rate_data[$key]['rates'][] = array(
-                                                                "occupancy" => $i,
-                                                                "rate" => intval($rates['adult_'.$i.'_rate'] * 100)
+    //                 for($i = 1; $i <= $room_maximum_occupancy; $i++)
+    //                 {
+    //                     if (isset($rates['adult_'.$i.'_rate']) && is_numeric($rates['adult_'.$i.'_rate']))
+    //                     {
+    //                         $rate_data[$key]['rates'][] = array(
+    //                                                             "occupancy" => $i,
+    //                                                             "rate" => intval($rates['adult_'.$i.'_rate'] * 100)
                                                                 
-                                                            );
-                        } else if (isset($rates['additional_adult_rate']) && $rates['additional_adult_rate'] > 0 && isset($rates['adult_4_rate']) && $rates['adult_4_rate'] > 0 && $i > 4) {
-                            $additional_adult_rate = ($rates['adult_4_rate'] + (($i - 4) * $rates['additional_adult_rate']));
-                            $rate_data[$key]['rates'][] = array(
-                                                                "occupancy" => $i,
-                                                                "rate" => intval($additional_adult_rate * 100)
-                                                            );
-                        }
-                    }
-                }
-            } else {
-                foreach ($rate_data as $key => $value) {
-                    $i = 2;
-                    if (isset($rates['adult_'.$i.'_rate']) && is_numeric($rates['adult_'.$i.'_rate']))
-                    {
-                        $rate_data[$key]['rate'] = intval($rates['adult_'.$i.'_rate'] * 100);
-                    }
-                }
-            }
-        }
-    }
-    else {
-        $rate_plan_data = $CI->Channex_int_model->get_channex_rate_plans_by_id(null, $CI->company_id, $ota_x_company_id);
+    //                                                         );
+    //                     } else if (isset($rates['additional_adult_rate']) && $rates['additional_adult_rate'] > 0 && isset($rates['adult_4_rate']) && $rates['adult_4_rate'] > 0 && $i > 4) {
+    //                         $additional_adult_rate = ($rates['adult_4_rate'] + (($i - 4) * $rates['additional_adult_rate']));
+    //                         $rate_data[$key]['rates'][] = array(
+    //                                                             "occupancy" => $i,
+    //                                                             "rate" => intval($additional_adult_rate * 100)
+    //                                                         );
+    //                     }
+    //                 }
+    //             }
+    //         } else {
+    //             foreach ($rate_data as $key => $value) {
+    //                 $i = 2;
+    //                 if (isset($rates['adult_'.$i.'_rate']) && is_numeric($rates['adult_'.$i.'_rate']))
+    //                 {
+    //                     $rate_data[$key]['rate'] = intval($rates['adult_'.$i.'_rate'] * 100);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // else {
 
-        $get_ota = $CI->Channex_int_model->get_channex_data($CI->company_id, 'channex');
+        if($rate_plan_id)
+            $rate_plan_data = $CI->Channex_int_model->get_channex_rate_plans_by_id($rate_plan_id, $CI->company_id, $ota_x_company_id);
+        else
+            $rate_plan_data = $CI->Channex_int_model->get_channex_rate_plans_by_id(null, $CI->company_id, $ota_x_company_id);
 
         $minical_rates = array();
 
@@ -508,7 +524,7 @@ function update_rates_batch ($start_date, $end_date, $data) {
                 $error_cause = 'rates_not_found';
             }
         }
-    }
+    // }
 
     $get_token_data = $CI->Channex_int_model->get_token(null, $CI->company_id, 'channex');
     

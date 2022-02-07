@@ -70,7 +70,7 @@
                             <?php
                                 foreach($minical_room_types as $room_type)
                                 { ?>
-                                    <option value="<?php echo $room_type['id']; ?>" <?php echo $value['minical_room_type_id'] == $room_type['id'] ? 'SELECTED' : ''; ?>>
+                                    <option value="<?php echo $room_type['id']; ?>" <?php echo isset($value['minical_room_type_id']) && $value['minical_room_type_id'] && $value['minical_room_type_id'] == $room_type['id'] ? 'SELECTED' : ''; ?>>
                                         <?php echo $room_type['name']; ?>
                                     </option>
                             <?php }
