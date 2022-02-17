@@ -869,7 +869,7 @@ class ChannexEmailTemplate {
 
         $this->ci->email->reply_to($company_support_email);
         
-        $this->ci->email->subject('Overbooking alert | ' . $email_data['company_name']);
+        $this->ci->email->subject('Room allocation conflict alert | ' . $email_data['company_name']);
         $this->ci->email->message($this->ci->load->view('../extensions/'.$this->module_name.'/views/over_booking_html', $email_data, true));
        
         $this->ci->email->send();

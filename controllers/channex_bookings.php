@@ -1317,7 +1317,7 @@ class Channex_bookings extends MY_Controller
                     'user_id' => 0, // User_id 0 is System user (null null)
                     'booking_id' => $booking_id,                  
                     'date_time' => gmdate('Y-m-d H:i:s'),
-                    'log' => "Overbooking alert email sent to " . $result_array['owner_email'],
+                    'log' => "Room allocation conflict alert email sent to " . $result_array['owner_email'],
                     'log_type' => SYSTEM_LOG
                 );
 
