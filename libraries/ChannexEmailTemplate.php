@@ -881,11 +881,16 @@ class ChannexEmailTemplate {
 
     function send_error_alert_email($email_data){
 
-        $whitelabelinfo = $this->ci->session->userdata('white_label_information');
+        $company = $this->ci->Company_model->get_company($email_data['company_id']);
+
+        $whitelabelinfo = null;
+        $white_label_detail = $this->ci->Whitelabel_partner_model->get_partners(array('id' => $company['partner_id']));
+        
+        if($white_label_detail && isset($white_label_detail[0])) {
+            $whitelabelinfo = $white_label_detail[0];
+        }
 
         $company_support_email = $whitelabelinfo && isset($whitelabelinfo['support_email']) && $whitelabelinfo['support_email'] ? $whitelabelinfo['support_email'] : 'support@minical.io';
-         
-        $company = $this->ci->Company_model->get_company($email_data['company_id']);
 
         $email_data['company_name'] = $company['name'];
 
@@ -893,14 +898,29 @@ class ChannexEmailTemplate {
         $this->ci->email->from($company_support_email);
 
         if (strtolower($_SERVER['HTTP_HOST']) == 'app.minical.io') {
-            $this->ci->email->to('pankaj@minical.io');
+
+            if($email_data['error_cause'] == 'property_not_found') {
+                $this->ci->email->to('pankaj@minical.io');
+                $this->ci->email->cc('mradul.jain90@gmail.com');
+            } else {
+                // $cc_list = 'pankaj@minical.io';
+                // $this->ci->email->to($company['email']);
+
+                $this->ci->email->to($company['email']);
+                $cc_list = "pankaj@minical.io, mradul.jain90@gmail.com";
+                $this->ci->email->cc($cc_list);
+            }
         }
 
-        $this->ci->email->cc('mradul.jain90@gmail.com');
+        // $this->ci->email->cc('mradul.jain90@gmail.com');
 
-        $this->ci->email->subject('Error alert | ' . $company['name']);
+        if(isset($email_data['subject']) && $email_data['subject'])
+            $this->ci->email->subject($email_data['subject']);
+        else
+            $this->ci->email->subject('Error alert | ' . $company['name']);
 
         $this->ci->email->message($this->ci->load->view('../extensions/'.$this->module_name.'/views/error_alert-html', $email_data, true));
+        // $this->ci->email->attach('https://app.minical.io/images/calendar-extension.png');
        
         $this->ci->email->send();
     

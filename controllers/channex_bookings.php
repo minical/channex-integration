@@ -84,17 +84,12 @@ class Channex_bookings extends MY_Controller
         $get_token_data = $this->Channex_int_model->get_token(null, $this->company_id, 'channex');
         $booking_response = array();
 
-        // if($this->refresh_token($this->company_id)){
-        //     $get_token_data = $this->Channex_int_model->get_token(null, $this->company_id, 'channex');
-        // }
-
         $token_data = json_decode($get_token_data['meta_data']);
         $token = $token_data->channex->api_key;
 
         $booking = $this->channexintegration->revision_bookings($ota_booking_id, $token);
 
         $response = json_decode($booking);
-        // prx($response);
         $this->channex_get_bookings($this->company_id, $response);
     }
 
@@ -114,10 +109,6 @@ class Channex_bookings extends MY_Controller
 
             $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
 
-            // if($this->refresh_token($company_id)){
-            //     $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
-            // }
-
             $token_data = json_decode($get_token_data['meta_data']);
             $token = $token_data->channex->api_key;
 
@@ -126,16 +117,10 @@ class Channex_bookings extends MY_Controller
             $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
             $booking_response = array();
 
-            // if($this->refresh_token($company_id)){
-            //  $get_token_data = $this->Channex_int_model->get_token(null, $company_id, 'channex');
-            // }
-
             $token_data = null;
             if(isset($get_token_data['meta_data']) && $get_token_data['meta_data']) {
-            $token_data = json_decode($get_token_data['meta_data']);
+                $token_data = json_decode($get_token_data['meta_data']);
             }
-
-            // if($token_data && isset($token_data->data) && $token_data->data && isset($token_data->data->attributes) && $token_data->data->attributes && isset($token_data->data->attributes->token) && $token_data->data->attributes->token){
 
             if($token_data)
             {
@@ -231,7 +216,10 @@ class Channex_bookings extends MY_Controller
 
                         if(!$minical_room_type_id){
                             $is_error = true;
+                            $error_channex_room_type_id = $channex_room_type_id;
                             $error_cause = 'minical_room_type_id_not_found';
+                            $subject = 'Minical | Missed Reservation from Channex!';
+                            $content = 'A reservation is missed while importing from Channex. <br/>The Room Types are not mapped correctly Minical. <br/>Please fix the mapping for following room type and go to Channex booking and resend the revision.';
                         }
 
                         switch ((string)$reservation->status) {
@@ -381,22 +369,27 @@ class Channex_bookings extends MY_Controller
                     $email_data = array(
                                         'property_id'       => isset($property_id) && $property_id ? $property_id : null,
                                         'company_id'        => $company_id,
+                                        'channex_room_type_id' => isset($error_channex_room_type_id) && $error_channex_room_type_id ? $error_channex_room_type_id : null,
                                         'error_cause'       => $error_cause,
                                         'ota_x_company_id'  => $channex_x_company_id,
                                         'ota_id'            => $ota_id,
                                         'get_token_data'    => $token_data,
                                         'channex_x_company' => isset($channex_x_company) && $channex_x_company ? $channex_x_company : null,
                                         'reservation'       => isset($reservation) && $reservation ? $reservation : null,
-                                        'datetime'          => date('Y-m-d H:i:s')
+                                        'subject'           => isset($subject) && $subject ? $subject : null,
+                                        'content'           => isset($content) && $content ? $content : null,
+                                        'source'            => isset($channex_booking_source) && $channex_booking_source ? $channex_booking_source : null,
+                                        'channex_booking_id'=> isset($channex_booking_id) && $channex_booking_id ? $channex_booking_id : null,
+                                        'datetime'          => gmdate('Y-m-d H:i:s')
                                     );
 
                     $error_data = $this->channexemailtemplate->send_error_alert_email($email_data);
-                    // echo $error_data['message'];
+                    $is_error = false;
                 }
 
                 // acknowledgement bookings
                 $this->channexintegration->acknowledge_bookings($channex_booking_ack_id, $token);
-            }
+            }   
         }
 
         if($is_error){
@@ -409,7 +402,7 @@ class Channex_bookings extends MY_Controller
                                 'ota_id'            => $ota_id,
                                 'get_token_data'    => $token_data,
                                 'channex_x_company' => isset($channex_x_company) && $channex_x_company ? $channex_x_company : null,
-                                'datetime'          => date('Y-m-d H:i:s')
+                                'datetime'          => gmdate('Y-m-d H:i:s')
                             );
 
             $error_data = $this->channexemailtemplate->send_error_alert_email($email_data);
@@ -1084,13 +1077,13 @@ class Channex_bookings extends MY_Controller
                 $parent_source = "Channex";
                 if($source) {
                     $is_new_source = true;
-                    if(strcmp($parent_source, trim($source)) == 0){
+                    if(strcmp($parent_source, trim($source)) == 0) {
                         $source_id = SOURCE_CHANNEX;
                         $is_new_source = false;
-                    }else{
+                    } else {
                         $source_ids = $this->Channex_booking_model->get_booking_source_detail($company_id);
-                        if($source_ids){
-                            foreach($source_ids as $ids){
+                        if($source_ids) {
+                            foreach($source_ids as $ids) {
                                 if(strcmp($ids['name'], $source) == 0)
                                 {   
                                     $source_id = $ids['id'];

@@ -8,5 +8,6 @@ $config = array(
     "image_name" => "channex_logo.svg",
     "setting_link" => "channex",
     "categories" => array("channel_manager"),
+    "is_open_source" => true,
     "marketplace_product_link" => "https://marketplace.minical.io/product/channex-integration"
 );
