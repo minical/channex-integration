@@ -96,6 +96,7 @@ class Channex_bookings extends MY_Controller
     function channex_get_bookings($company_id, $booking_revesion = array()){
 
         $is_error = false;
+        $booking_loop = true;
         $error_cause = '';
         $email_data = array();
             
@@ -179,7 +180,7 @@ class Channex_bookings extends MY_Controller
                 $property_id = $reservation->property_id;
 
                 $raw_message = isset($reservation->raw_message) ? json_decode($reservation->raw_message, true) : null;
-
+                // $raw_message = null;
                 $comment = $CommissionPayableAmount = $CommissionAmount = $CommissionCurrencyCode = $CommissionDecimalPlace = "";
 
                 if($raw_message){
@@ -216,6 +217,7 @@ class Channex_bookings extends MY_Controller
 
                         if(!$minical_room_type_id){
                             $is_error = true;
+                            $booking_loop = false;
                             $error_channex_room_type_id = $channex_room_type_id;
                             $error_cause = 'minical_room_type_id_not_found';
                             $subject = 'Minical | Missed Reservation from Channex!';
@@ -385,6 +387,9 @@ class Channex_bookings extends MY_Controller
 
                     $error_data = $this->channexemailtemplate->send_error_alert_email($email_data);
                     $is_error = false;
+                    if(!$booking_loop){
+                        $booking_array = array();
+                    }
                 }
 
                 // acknowledgement bookings
