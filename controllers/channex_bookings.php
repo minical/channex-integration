@@ -97,6 +97,7 @@ class Channex_bookings extends MY_Controller
 
         $is_error = false;
         $booking_loop = true;
+        $error_book_type = '';
         $error_cause = '';
         $email_data = array();
             
@@ -245,6 +246,8 @@ class Channex_bookings extends MY_Controller
                                 "source" => SOURCE_CHANNEX,
                                 "minical_room_type_id" => $minical_room_type_id
                             );
+
+                            $error_book_type = 'cancelled';
                         }
                         else
                         {
@@ -385,7 +388,10 @@ class Channex_bookings extends MY_Controller
                                         'datetime'          => gmdate('Y-m-d H:i:s')
                                     );
 
-                    $error_data = $this->channexemailtemplate->send_error_alert_email($email_data);
+                    if($error_book_type != 'cancelled'){
+                        $error_data = $this->channexemailtemplate->send_error_alert_email($email_data);
+                    }
+                    
                     $is_error = false;
                     if(!$booking_loop){
                         $booking_array = array();
