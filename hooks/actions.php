@@ -42,11 +42,12 @@ function update_availability_fn ($data) {
 function update_availability_batch ($start_date, $end_date, $data) {
    
     $CI = &get_instance();
-    $CI->load->model('../extensions/channex_integration/models/Channex_int_model');
-    $CI->load->model('../extensions/channex_integration/models/Room_type_model');
-    $CI->load->model('../extensions/channex_integration/models/Companies_model');
-    $CI->load->library('../extensions/channex_integration/libraries/ChannexIntegration');
-    $CI->load->library('../extensions/channex_integration/libraries/ChannexEmailTemplate');
+    $CI->module_name = $CI->router->fetch_module();
+    $CI->load->model('../extensions/'.$CI->module_name.'/models/Channex_int_model');
+    $CI->load->model('../extensions/'.$CI->module_name.'/models/Room_type_model');
+    $CI->load->model('../extensions/'.$CI->module_name.'/models/Companies_model');
+    $CI->load->library('../extensions/'.$CI->module_name.'/libraries/ChannexIntegration');
+    $CI->load->library('../extensions/'.$CI->module_name.'/libraries/ChannexEmailTemplate');
 
     $end_date = date("Y-m-d", strtotime("+1 day", strtotime($end_date)));
     
@@ -270,11 +271,12 @@ function update_rates_fn($data){
 function update_rates_batch ($start_date, $end_date, $data) {
 
     $CI = &get_instance();
-    $CI->load->model('../extensions/channex_integration/models/Channex_int_model');
-    $CI->load->model('../extensions/channex_integration/models/Rates_model');
-    $CI->load->model('../extensions/channex_integration/models/Companies_model');
-    $CI->load->library('../extensions/channex_integration/libraries/ChannexIntegration');
-    $CI->load->library('../extensions/channex_integration/libraries/ChannexEmailTemplate');
+    $CI->module_name = $CI->router->fetch_module();
+    $CI->load->model('../extensions/'.$CI->module_name.'/models/Channex_int_model');
+    $CI->load->model('../extensions/'.$CI->module_name.'/models/Rates_model');
+    $CI->load->model('../extensions/'.$CI->module_name.'/models/Companies_model');
+    $CI->load->library('../extensions/'.$CI->module_name.'/libraries/ChannexIntegration');
+    $CI->load->library('../extensions/'.$CI->module_name.'/libraries/ChannexEmailTemplate');
 
     $rate_plan_id = isset($data['rate_plan_id']) && $data['rate_plan_id'] ? $data['rate_plan_id'] : null;
 

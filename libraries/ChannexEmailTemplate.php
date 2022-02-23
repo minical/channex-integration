@@ -6,7 +6,7 @@ class ChannexEmailTemplate {
     {
         $this->ci =& get_instance();
 
-        $this->module_name = 'channex_integration';
+        $this->module_name = $this->ci->router->fetch_module();
 
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Channex_booking_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Booking_room_history_model');
