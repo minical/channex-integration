@@ -41,7 +41,9 @@
                 </select>
             </div>
         </div>
-
+        <span id="loading_img" style="display: none;">
+            <img src="<?php echo base_url().'images/loading.gif' ?>" style="width: 3%;margin: 25px 0px;"/>
+        </span>
 
         
 

@@ -78,9 +78,13 @@ $(document).ready(function(){
                 type    : "POST",
                 dataType: 'html',
                 url     : getBaseURL() + 'get_room_types',
+                beforeSend: function() {
+                    $("#loading_img").show();
+                },
                 data: {property_id : property_id, channex_id : pathArray[pathArray.length-1]},
                 success: function( data ) {
                     $('.save_channex_mapping').html(data);
+                    $("#loading_img").hide();
                 }
             });
         }
