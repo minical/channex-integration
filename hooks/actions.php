@@ -479,7 +479,7 @@ function update_rates_batch ($start_date, $end_date, $data) {
                                             if (isset($minical_rate_item["adult_{$i}_rate"]) && $minical_rate_item["adult_{$i}_rate"]) {
                                                 $rate_data_item['rates'][] = array(
                                                     "occupancy" => $i,
-                                                    "rate" => intval($minical_rate_item["adult_{$i}_rate"] * 100)
+                                                    "rate" => $minical_rate_item['currency_code'] == "JPY" ? intval($minical_rate_item["adult_{$i}_rate"]) : intval($minical_rate_item["adult_{$i}_rate"] * 100)
                                                     
                                                 );
                                             }
@@ -493,7 +493,7 @@ function update_rates_batch ($start_date, $end_date, $data) {
                                             $additional_adult_rate = ($minical_rate_item['adult_4_rate'] + (($i - 4) * $minical_rate_item['additional_adult_rate']));
                                             $rate_data_item['rates'][] = array(
                                                 "occupancy" => $i, 
-                                                "rate" => intval($additional_adult_rate * 100)
+                                                "rate" => $minical_rate_item['currency_code'] == "JPY" ? intval($additional_adult_rate) : intval($additional_adult_rate * 100)
                                             );
                                         }
                                     }
@@ -502,7 +502,7 @@ function update_rates_batch ($start_date, $end_date, $data) {
                                     $i = 2;
                                     if (isset($minical_rate_item['adult_'.$i.'_rate']) && is_numeric($minical_rate_item['adult_'.$i.'_rate']))
                                     {
-                                        $rate_data_item['rate'] = intval($minical_rate_item['adult_'.$i.'_rate'] * 100);
+                                        $rate_data_item['rate'] = $minical_rate_item['currency_code'] == "JPY" ? intval($minical_rate_item['adult_'.$i.'_rate']) : intval($minical_rate_item['adult_'.$i.'_rate'] * 100);
                                     }
                                 }
 
