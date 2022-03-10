@@ -172,51 +172,6 @@ function update_availability_batch ($start_date, $end_date, $data) {
     }
 }
 
-function channex_refresh_token(){
-    $CI = &get_instance();
-    $CI->load->model(array('Channex_int_model','Room_type_model'));
-
-    $channex_data = $CI->Channex_int_model->get_channex_data($CI->company_id, 'channex');
-
-    if($channex_data){
-        if(isset($channex_data['created_date']) && $channex_data['created_date']){
-            
-            $timestamp = strtotime($channex_data['created_date']); //1373673600
-
-            // getting current date 
-            $cDate = strtotime(date('Y-m-d H:i:s'));
-
-            // Getting the value of old date + 24 hours
-            $oldDate = $timestamp + 86400; // 86400 seconds in 24 hrs
-
-            if($oldDate < $cDate)
-            {
-                $token_data = json_decode($channex_data['meta_data']);
-
-                $refresh_token = $token_data->data->attributes->refresh_token;
-
-                $get_refresh_token_data = $CI->channexintegration->refresh_token($refresh_token);
-                $response = json_decode($get_refresh_token_data);
-
-                if(isset($response->data) && $response->data){
-
-                    $data = array(
-                                    'meta_data' => $get_refresh_token_data,
-                                    'created_date' => date('Y-m-d H:i:s'),
-                                    'email' => $response->data->relationships->user->data->attributes->email,
-                                    'company_id' => $CI->company_id,
-                                );
-
-                    $CI->Channex_int_model->update_token($data);
-                    return true;
-                }
-            } else {
-                return false;
-            }
-        }
-    }
-}
-
 function save_logs($ota_property_id = null, $request_type = null, $response_type = null, $xml_in = null, $xml_out = null) {
 
     $CI = &get_instance();
@@ -290,6 +245,8 @@ function update_rates_batch ($start_date, $end_date, $data) {
     $is_error_send = false;
     $error_cause = '';
     $email_data = array();
+
+    $currency_array = array('JPY', 'VND');
 
     $get_ota = $CI->Channex_int_model->get_channex_data($CI->company_id, 'channex');
 
@@ -479,7 +436,7 @@ function update_rates_batch ($start_date, $end_date, $data) {
                                             if (isset($minical_rate_item["adult_{$i}_rate"]) && $minical_rate_item["adult_{$i}_rate"]) {
                                                 $rate_data_item['rates'][] = array(
                                                     "occupancy" => $i,
-                                                    "rate" => $minical_rate_item['currency_code'] == "JPY" ? intval($minical_rate_item["adult_{$i}_rate"]) : intval($minical_rate_item["adult_{$i}_rate"] * 100)
+                                                    "rate" => in_array($minical_rate_item['currency_code'], $currency_array) ? intval($minical_rate_item["adult_{$i}_rate"]) : intval($minical_rate_item["adult_{$i}_rate"] * 100)
                                                     
                                                 );
                                             }
@@ -493,7 +450,7 @@ function update_rates_batch ($start_date, $end_date, $data) {
                                             $additional_adult_rate = ($minical_rate_item['adult_4_rate'] + (($i - 4) * $minical_rate_item['additional_adult_rate']));
                                             $rate_data_item['rates'][] = array(
                                                 "occupancy" => $i, 
-                                                "rate" => $minical_rate_item['currency_code'] == "JPY" ? intval($additional_adult_rate) : intval($additional_adult_rate * 100)
+                                                "rate" => in_array($minical_rate_item['currency_code'], $currency_array) ? intval($additional_adult_rate) : intval($additional_adult_rate * 100)
                                             );
                                         }
                                     }
@@ -502,7 +459,7 @@ function update_rates_batch ($start_date, $end_date, $data) {
                                     $i = 2;
                                     if (isset($minical_rate_item['adult_'.$i.'_rate']) && is_numeric($minical_rate_item['adult_'.$i.'_rate']))
                                     {
-                                        $rate_data_item['rate'] = $minical_rate_item['currency_code'] == "JPY" ? intval($minical_rate_item['adult_'.$i.'_rate']) : intval($minical_rate_item['adult_'.$i.'_rate'] * 100);
+                                        $rate_data_item['rate'] = in_array($minical_rate_item['currency_code'], $currency_array) ? intval($minical_rate_item['adult_'.$i.'_rate']) : intval($minical_rate_item['adult_'.$i.'_rate'] * 100);
                                     }
                                 }
 
