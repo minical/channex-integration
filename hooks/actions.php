@@ -43,6 +43,16 @@ function update_availability_batch ($start_date, $end_date, $data) {
    
     $CI = &get_instance();
     $CI->module_name = $CI->router->fetch_module();
+
+    if($CI->module_name == '') {
+        foreach ($CI->all_active_modules as $key => $value) {
+            if($value['name'] == 'Channex Integration') {
+                $CI->module_name = $key;
+                break;
+            }
+        }
+    }
+
     $CI->load->model('../extensions/'.$CI->module_name.'/models/Channex_int_model');
     $CI->load->model('../extensions/'.$CI->module_name.'/models/Room_type_model');
     $CI->load->model('../extensions/'.$CI->module_name.'/models/Companies_model');
@@ -227,6 +237,16 @@ function update_rates_batch ($start_date, $end_date, $data) {
 
     $CI = &get_instance();
     $CI->module_name = $CI->router->fetch_module();
+
+    if($CI->module_name == '') {
+        foreach ($CI->all_active_modules as $key => $value) {
+            if($value['name'] == 'Channex Integration') {
+                $CI->module_name = $key;
+                break;
+            }
+        }
+    }
+    
     $CI->load->model('../extensions/'.$CI->module_name.'/models/Channex_int_model');
     $CI->load->model('../extensions/'.$CI->module_name.'/models/Rates_model');
     $CI->load->model('../extensions/'.$CI->module_name.'/models/Companies_model');

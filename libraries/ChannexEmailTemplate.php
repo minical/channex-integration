@@ -8,6 +8,15 @@ class ChannexEmailTemplate {
 
         $this->module_name = $this->ci->router->fetch_module();
 
+        if($this->module_name == ''){
+            foreach ($this->ci->all_active_modules as $key => $value) {
+                if($value['name'] == 'Channex Integration'){
+                    $this->module_name = $key;
+                    break;
+                }
+            }
+        }
+
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Channex_booking_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Booking_room_history_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Rooms_model');
