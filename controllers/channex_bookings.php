@@ -552,6 +552,16 @@ class Channex_bookings extends MY_Controller
 
             // bookings creation 
             foreach($bookings_to_be_created as $key => $booking){
+
+                //sleep
+                sleep(rand(0, 4));
+                
+                if($booking['booking_type'] == 'new' && !empty($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'])))
+                {
+                    echo "Booking already exists ID - ".$booking['ota_booking_id']."<br/>";
+                    continue;
+                }
+                
                 $response = $this->create_bookings($booking);
 
                 $is_booking_inserted[$booking['ota_booking_id']] = true;
