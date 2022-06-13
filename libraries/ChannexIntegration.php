@@ -176,7 +176,7 @@ class ChannexIntegration
     public function get_bookings($property_id, $token){
 
         $api_url = $this->channex_url;
-        $method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=100&order[inserted_at]=desc';
+        $method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=10&order[inserted_at]=desc';
 
         $method_type = 'GET';
 

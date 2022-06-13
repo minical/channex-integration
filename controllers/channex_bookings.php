@@ -35,48 +35,6 @@ class Channex_bookings extends MY_Controller
         $this->channex_host = ($this->config->item('app_environment') == "development") ? "staging.channex.io" : "app.channex.io";
 
         $this->load->vars($view_data);
-    }   
-
-    function refresh_token($company_id){
-        $channex_data = $this->Channex_int_model->get_channex_data($company_id, 'channex');
-        
-        if($channex_data){
-            if(isset($channex_data['created_date']) && $channex_data['created_date']){
-                
-                $timestamp = strtotime($channex_data['created_date']); //1373673600
-
-                // getting current date 
-                $cDate = strtotime(date('Y-m-d H:i:s'));
-
-                // Getting the value of old date + 24 hours
-                $oldDate = $timestamp + 86400; // 86400 seconds in 24 hrs
-
-                if($oldDate < $cDate)
-                {
-                    $token_data = json_decode($channex_data['meta_data']);
-
-                    $refresh_token = $token_data->data->attributes->refresh_token;
-
-                    $get_refresh_token_data = $this->channexintegration->refresh_token($refresh_token); // refresh_token function from channex integration library
-                    $response = json_decode($get_refresh_token_data);
-
-                    if(isset($response->data) && $response->data){
-
-                        $data = array(
-                                        'meta_data' => $get_refresh_token_data,
-                                        'created_date' => date('Y-m-d H:i:s'),
-                                        'email' => $response->data->relationships->user->data->attributes->email,
-                                        'company_id' => $company_id,
-                                    );
-
-                        $this->Channex_int_model->update_token($data);
-                        return true;
-                    }
-                } else {
-                    return false;
-                }
-            }
-        }
     }
 
     function channex_retrieve_booking($ota_booking_id){
@@ -103,7 +61,7 @@ class Channex_bookings extends MY_Controller
             
         if($booking_revesion){
 
-            $booking_response->data[] = isset($booking_revesion->data) && $booking_revesion->data ? $booking_revesion->data : null;
+            $booking_response->data[] = isset($booking_revesion->data) && $booking_revesion->data ? $booking_revesion->data : array();
             $is_pci_booking = true;
 
             $api_url = $this->channex_url;
@@ -134,7 +92,7 @@ class Channex_bookings extends MY_Controller
                 if($property_id)
                 {
                     $api_url = $this->channex_url;
-                    $method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=100&order[inserted_at]=desc';
+                    $method = '/api/v1/booking_revisions/feed?filter[property_id]='.$property_id.'&pagination[page]=1&pagination[limit]=10&order[inserted_at]=desc';
 
                     $headers = array(
                         "Host: ".$this->channex_host,
@@ -441,6 +399,9 @@ class Channex_bookings extends MY_Controller
                 ){
                     if($booking['booking_type'] != 'modified')
                     {
+                        //sleep
+                        sleep(rand(0, 4));
+
                         if(empty($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'])))
                         {
                             $booking_arr[] = $booking;
@@ -520,7 +481,7 @@ class Channex_bookings extends MY_Controller
                     $ota_booking = array(
                         'ota_booking_id' => $booking['ota_booking_id'],
                         'pms_booking_id' => $booking_ids_to_be_deleted[0],
-                        'create_date_time' => date('Y-m-d H:i:s', time()),
+                        'create_date_time' => gmdate('Y-m-d H:i:s'),
                         'booking_type' => 'cancelled',
                         'xml_out' => json_encode($booking, true)
                     );
@@ -553,15 +514,6 @@ class Channex_bookings extends MY_Controller
             // bookings creation 
             foreach($bookings_to_be_created as $key => $booking){
 
-                //sleep
-                sleep(rand(0, 4));
-                
-                if($booking['booking_type'] == 'new' && !empty($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'])))
-                {
-                    echo "Booking already exists ID - ".$booking['ota_booking_id']."<br/>";
-                    continue;
-                }
-                
                 $response = $this->create_bookings($booking);
 
                 $is_booking_inserted[$booking['ota_booking_id']] = true;
@@ -572,7 +524,7 @@ class Channex_bookings extends MY_Controller
                         'check_in_date' => $booking['check_in_date'],
                         'check_out_date' => $booking['check_out_date'],
                         'pms_booking_id' => $response['minical_booking_id'],
-                        'create_date_time' => date('Y-m-d H:i:s', time()),
+                        'create_date_time' => gmdate('Y-m-d H:i:s'),
                         'xml_out' => json_encode($booking, true)
                     );
 

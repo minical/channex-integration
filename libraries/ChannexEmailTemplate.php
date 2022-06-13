@@ -866,7 +866,7 @@ class ChannexEmailTemplate {
         {
             if (isset($company['email']))
             {
-                $cc_list = 'pankaj@minical.io';
+                $cc_list = 'pankaj@minical.io, mradul.jain90@gmail.com';
                 $this->ci->email->to($company['email']);
                 if($whitelabelinfo && isset($whitelabelinfo['overbooking_alert_email']) && $whitelabelinfo['overbooking_alert_email']){
                     $cc_list .= ",".$whitelabelinfo['overbooking_alert_email'];
@@ -912,11 +912,17 @@ class ChannexEmailTemplate {
                 $this->ci->email->to('pankaj@minical.io');
                 $this->ci->email->cc('mradul.jain90@gmail.com');
             } else {
-                // $cc_list = 'pankaj@minical.io';
-                // $this->ci->email->to($company['email']);
-
                 $this->ci->email->to($company['email']);
+
+                $this->ci->load->model('User_model');
+                $user_detail = $this->ci->User_model->get_user_profile($whitelabelinfo['admin_user_id']);
+
                 $cc_list = "pankaj@minical.io, mradul.jain90@gmail.com";
+
+                if(isset($user_detail['email']) && $user_detail['email']) {
+                    $cc_list .= ", ".$user_detail['email'];
+                }
+
                 $this->ci->email->cc($cc_list);
             }
         }
