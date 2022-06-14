@@ -69,15 +69,16 @@ document.addEventListener("booking_updated", function(e) {
     if(e && e.detail && e.detail.reservation_id)
     {
         console.log(e.detail);
+        console.log(e.detail.booking_data.rooms);
         $.ajax({
             type    : "POST",
             dataType: 'json',
             url     : getBaseURL() + 'channex_update_availability',
             data: {
                     booking_id : e.detail.reservation_id,
-                    check_in_date : e.detail.booking_data.rooms[0].check_in_date,
-                    check_out_date : e.detail.booking_data.rooms[0].check_out_date,
-                    room_type_id : e.detail.booking_data.rooms[0].room_type_id
+                    check_in_date : typeof e.detail.booking_data.rooms !== 'undefined' ? e.detail.booking_data.rooms[0].check_in_date : e.detail.booking_data.check_in_date,
+                    check_out_date : typeof e.detail.booking_data.rooms !== 'undefined'  ? e.detail.booking_data.rooms[0].check_out_date : e.detail.booking_data.check_out_date,
+                    room_type_id : typeof e.detail.booking_data.rooms !== 'undefined'  ? e.detail.booking_data.rooms[0].room_type_id : e.detail.booking_data.room_type_id
                 },
             success: function( resp ) {
                 console.log(resp);

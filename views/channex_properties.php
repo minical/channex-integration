@@ -51,6 +51,10 @@
 
     <?php if (isset($channex_room_types_rate_plans) && count($channex_room_types_rate_plans) > 0): ?>
         <button type="button" class='btn btn-success full-sync-channex pull-right' channex_id="<?=$channex_id;?>"><?php echo l("channex_integration/Full Sync");?></button>
+        <div style="float: right;text-align: right;margin-top: -15px;vertical-align: top;">
+            <input style="margin: 5px -12px;position: absolute;" type="checkbox" class="is_extra_charge" name="is_extra_charge" <?php echo $is_extra_charge == 1 ? 'checked' : ''; ?>>
+            <label style="word-break: break-all;width: 53%;" for="name" class="control-label"><?php echo l("channex_integration/Import extra charges from Reservations (eg: Cleaning fee) and add to Invoice", true); ?></label>
+        </div>
     <?php endif; ?>
 
     <form class="save_channex_mapping" >
@@ -112,8 +116,8 @@
                                 <label for="pricing_mode_label" class="pricing_mode_label"><?php echo l('channex_integration/Pricing Mode'); ?></label>
                             <?php } ?>
                             <select name="rate_type" class="channex_manager rate_type">
-                                <option value="OBP" <?php if($val['rate_update_type'] == 'OBP') { echo 'selected'; } ?> >Occupancy Based Pricing</option>
-                                <option value="PRP" <?php if($val['rate_update_type'] == 'PRP') { echo 'selected'; } ?> >Per-Room Pricing</option>
+                                <option value="OBP" <?php if(isset($val['rate_update_type']) && $val['rate_update_type'] == 'OBP') { echo 'selected'; } ?> >Occupancy Based Pricing</option>
+                                <option value="PRP" <?php if(isset($val['rate_update_type']) && $val['rate_update_type'] == 'PRP') { echo 'selected'; } ?> >Per-Room Pricing</option>
                             </select>
                             <span style="font-size: 15px;" data-toggle="modal" data-target="#show_rate_details">
                                 <i class="fa fa-question-circle" aria-hidden="true"></i>

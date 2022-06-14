@@ -52,7 +52,7 @@
 			<br />
 			<?php echo l('This overbooking might be caused by following reasons', true); ?>: <br />
 			<?php if($no_rooms_available){ ?>
-					- <?php echo l('No rooms available for booked dates', true); ?>. <br />
+					- <?php echo l('Continuous room is not available for the following dates', true); ?>. <br />
 					<?php if($source == SOURCE_BOOKING_DOT_COM){ ?>
 					- <?php echo l('Auto-replenish feature is enabled on Booking.com', true); ?> (<?php echo l('Contact your Account manager and ask them to disable this feature', true); ?>.) <br />
 			        <?php }
@@ -64,7 +64,7 @@
 				- <?php echo l('Allowed Non-Continuous rooms/blocks are less than available non-continuous rooms', true); ?>. <br />
 			<?php }
 			else { ?>
-				- <?php echo l('No rooms available for booked dates', true); ?>. <br />
+				- <?php echo l('Continuous room is not available for the following dates', true); ?>. <br />
 				<?php if($source == SOURCE_BOOKING_DOT_COM){ ?>
 					- <?php echo l('Auto-replenish feature is enabled on Booking.com', true); ?> (<?php echo l('Contact your Account manager and ask them to disable this feature', true); ?>.) <br />
 			<?php } } ?>

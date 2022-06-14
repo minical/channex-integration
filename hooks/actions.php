@@ -183,13 +183,20 @@ function update_availability_batch ($start_date, $end_date, $data) {
 
         if($token){
             $avail_array["values"] = $availability_data;
+
+            if($data['update_from'] != 'booking_controller') {
             echo 'availability request = ';prx($avail_array, 1);
+            }
+
             $response = $CI->channexintegration->update_availability($avail_array, $token);
 
             save_logs($property_id, 0, 0, json_encode($avail_array), $response);
 
             $response = json_decode($response, true);
+
+            if($data['update_from'] != 'booking_controller') {
             echo 'availability resp = ';prx($response, 1);
+            }
         } else {
             $is_error = true;
             $error_cause = 'availability_token_not_found';
