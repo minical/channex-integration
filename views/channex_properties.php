@@ -1,7 +1,7 @@
 <div class="app-page-title">
     <div class="page-title-wrapper head-fix-wep">
         <div class="page-title-heading">
-            <h2><?php echo l('channex_integration/Channex Mapping with Minical', true);?> </h2>
+            <h2><?php echo l('channex_integration/Channex Mapping with Rate Plans', true);?> </h2>
         </div>
         <div class="page-title-actions">
             <?php if (isset($channex_room_types_rate_plans) && count($channex_room_types_rate_plans) > 0): ?>

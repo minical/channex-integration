@@ -121,6 +121,16 @@ class Charge_types_model extends CI_Model {
         	return $query->result_array();
         }        
     }
+
+    function insert_charge($data) 
+	{		
+		$this->db->insert('charge', $data);
+		if ($this->db->_error_message())
+		{
+			show_error($this->db->_error_message());
+		}
+            return $this->db->insert_id();
+	}
 }
 
 /* End of file - rate_model.php */

@@ -120,13 +120,43 @@ class Channex_bookings extends MY_Controller
             }
         }
 
+        // booking json
+
+        $booking_response = json_decode($booking_response, true);
+        $book_data = $booking_response['data'];
+
+        // sorting of booking by timestamp
+        usort($book_data, function($a, $b) {
+            return strtotime($a['attributes']['inserted_at']) - strtotime($b['attributes']['inserted_at']);
+        });
+
+        $booking_response['data'] = $book_data;
+
+        // fetch only highest timestamp bookings (if OTA booking id is same)
+        $ota_ids = array();
+        foreach ($booking_response['data'] as $key => $value) {
+            $ota_reservation_code = $value['attributes']['ota_reservation_code'];
+            if (
+                isset($ota_ids[$ota_reservation_code])
+            ) {
+                // delete old key
+                unset($booking_response['data'][$ota_ids[$ota_reservation_code]]);
+            }
+            
+            $ota_ids[$ota_reservation_code] = $key;
+        }
+
+        $booking_response['data'] = array_values($booking_response['data']);
+        $booking_response = json_decode(json_encode($booking_response));
+
+        // prx($booking_response);
+
         $booking_array = array();
         
-        // prx(json_encode($booking_response));
-        // $booking_response = file_get_contents("php://input");
-        // $booking_response = json_decode($booking_response);
-
         if (isset($booking_response->data)){
+
+            $check_ota_booking = array();
+            $is_service_add = false;
 
             foreach ($booking_response->data as $key => $book) {
                 
@@ -167,6 +197,16 @@ class Channex_bookings extends MY_Controller
                 $channex_booking_source = isset($reservation->ota_name) && $reservation->ota_name ? $reservation->ota_name : "";
 
                 $rooms = $reservation->rooms;
+
+                $services = "";
+                if(isset($channex_x_company['is_extra_charge']) && $channex_x_company['is_extra_charge']) {
+                    $services = $reservation->services;
+                }
+
+                if(!in_array($channex_booking_id, $check_ota_booking)) {
+                    $is_service_add = true;
+                    $check_ota_booking[] = $channex_booking_id;
+                }
 
                 if($rooms){
                     foreach ($rooms as $key => $room) {
@@ -260,6 +300,12 @@ class Channex_bookings extends MY_Controller
                                 );
                             }
 
+                            $ota_services = '';
+                            if($is_service_add && $services){
+                                $ota_services = $services;
+                                $is_service_add = false;
+                            }
+
                             $guest_name = $primary_guest->name;
                             $guest_name .= isset($primary_guest->surname) && $primary_guest->surname ? ' '.$primary_guest->surname : '';
 
@@ -275,6 +321,7 @@ class Channex_bookings extends MY_Controller
                                 "adult_count" => $adult_count,
                                 "children_count" => $child_count,
                                 "booking_notes" => "created from OTA (Booking ID: ".$channex_booking_id.")\n".(string)$notes,
+                                "services" => $ota_services,
                                 "rate_plan" => array(
                                     "rate_plan_name" => "ota #".$channex_booking_id,
                                     "number_of_adults_included_for_base_rate" => $adult_count,
@@ -285,12 +332,12 @@ class Channex_bookings extends MY_Controller
                                 "booking_customer" => array(
                                     'company_id' => $company_id,
                                     'customer_name' => $guest_name,
-                                    'phone' => $primary_guest->phone,
+                                    'phone' => isset($primary_guest->phone) && $primary_guest->phone ? $primary_guest->phone : '',
                                     'email' => (string)$primary_guest->mail,
-                                    'address' => $primary_guest->address ? (string) $primary_guest->address : '', 
-                                    'city' => $primary_guest->city ? (string) $primary_guest->city : '', 
-                                    'country' => $primary_guest->country ? (string) $primary_guest->country : '', 
-                                    'postal_code' => $primary_guest->zip ? (string) $primary_guest->zip : ''
+                                    'address' => isset($primary_guest->address) && $primary_guest->address ? (string) $primary_guest->address : '', 
+                                    'city' => isset($primary_guest->city) && $primary_guest->city ? (string) $primary_guest->city : '', 
+                                    'country' => isset($primary_guest->country) && $primary_guest->country ? (string) $primary_guest->country : '', 
+                                    'postal_code' => isset($primary_guest->zip) && $primary_guest->zip ? (string) $primary_guest->zip : ''
                                 )
                             );
 
@@ -322,8 +369,28 @@ class Channex_bookings extends MY_Controller
                         }
                     }
                 } else {
-                    $is_error = true;
-                    $error_cause = 'rooms_not_found';
+
+                    switch ((string)$reservation->status) {
+                        case 'cancelled':
+                            $booking_type = 'cancelled';
+                            break;
+                    }
+
+                    if ($booking_type == "cancelled")
+                    {
+                        $booking_array[] = array(
+                            'ota_booking_id' => $channex_booking_id,
+                            'booking_type' => $booking_type,
+                            'company_id' => $company_id,
+                            "source" => SOURCE_CHANNEX
+                            // "minical_room_type_id" => $minical_room_type_id
+                        );
+
+                        $error_book_type = 'cancelled';
+                    } else {
+                        $is_error = true;
+                        $error_cause = 'rooms_not_found';
+                    }
                 }
 
                 if($is_error){
@@ -410,7 +477,7 @@ class Channex_bookings extends MY_Controller
                             unset($booking_array[$index]); 
                             continue;
                         }
-                    } else if($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'], $booking['check_in_date'], $booking['check_out_date'])) {
+                    } else if($this->OTA_model->get_booking_by_ota_booking_id($booking['ota_booking_id'], $booking['booking_type'], $booking['check_in_date'], $booking['check_out_date']) && $booking['booking_type'] != 'modified') {
 
                         echo "Booking already exists ID - ".$booking['ota_booking_id']."<br/>";
                         unset($booking_array[$index]); 
@@ -492,12 +559,10 @@ class Channex_bookings extends MY_Controller
                     
                     if (isset($existing_booking[0]['check_in_date']) && isset($existing_booking[0]['check_out_date'])) 
                     {
-
-
                         $update_availability_data = array(
                                         'start_date' => $existing_booking[0]['check_in_date'],
                                         'end_date' => $existing_booking[0]['check_out_date'],
-                                        'room_type_id' => $booking['minical_room_type_id'],
+                                        'room_type_id' => isset($booking['minical_room_type_id']) && $booking['minical_room_type_id'] ? $booking['minical_room_type_id'] : null,
                                         'company_id' => $company_id,
                                         'update_from' => 'extension'
                                                 );
@@ -821,6 +886,11 @@ class Channex_bookings extends MY_Controller
             $booking_customer = $booking['booking_customer'];
             $booking_type = $booking['booking_type'];
             $company_id = $booking['company_id'];
+
+            $services = array();
+            if($booking['services'] && count($booking['services']) > 0)
+                $services = json_decode(json_encode($booking['services']), true);
+
             if(isset($booking['card']) && isset($booking['card']['number']) && isset($booking['card']['token'])){
                 $cc_tokenex_token = $cc_cvc_encrypted = NULL;
 
@@ -1226,6 +1296,21 @@ class Channex_bookings extends MY_Controller
                         $extra['quantity'],
                         $extra['rate']);
 
+                }
+            }
+
+            // add the extra charges (eg: Cleaning fee) into inovice
+
+            if($services && count($services) > 0) {
+                foreach ($services as $key => $service) {
+                    $charge['selling_date'] = $company_detail['selling_date'];
+                    $charge['booking_id'] = $booking_id;
+                    // $charge['customer_id'] = $booking_customer_id;
+                    $charge['charge_type_id'] = $rate_plan['charge_type_id'];
+                    $charge['amount'] = $service['total_price'];
+                    $charge['description'] = (isset($service['persons']) && $service['persons'] > 1) ? $service['name']." (". $service['persons'] .")" : $service['name'];
+                    
+                    $this->Charge_types_model->insert_charge($charge);
                 }
             }
 

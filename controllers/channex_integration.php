@@ -34,57 +34,6 @@ class Channex_integration extends MY_Controller
 		$this->channex();
 	}
 
-	function channex_refresh_token(){
-		$channex_data = $this->Channex_int_model->get_channex_data($this->company_id, 'channex');
-
-		if($channex_data){
-			if(isset($channex_data['created_date']) && $channex_data['created_date']){
-				
-				$timestamp = strtotime($channex_data['created_date']); //1373673600
-
-				// getting current date 
-				$cDate = strtotime(date('Y-m-d H:i:s'));
-
-				// Getting the value of old date + 24 hours
-				$oldDate = $timestamp + 86400; // 86400 seconds in 24 hrs
-
-				if($oldDate < $cDate)
-				{
-					$token_data = json_decode($channex_data['meta_data']);
-
-					if(
-						isset($token_data->data) &&
-						$token_data->data &&
-						isset($token_data->data->attributes) &&
-						$token_data->data->attributes &&
-						isset($token_data->data->attributes->refresh_token) &&
-						$token_data->data->attributes->refresh_token
-					) {
-		        		$refresh_token = $token_data->data->attributes->refresh_token;
-
-						$get_refresh_token_data = $this->channexintegration->refresh_token($refresh_token);
-						$response = json_decode($get_refresh_token_data);
-
-						if(isset($response->data) && $response->data){
-
-							$data = array(
-											'meta_data' => $get_refresh_token_data,
-											'created_date' => date('Y-m-d H:i:s'),
-											'email' => $response->data->relationships->user->data->attributes->email,
-											'company_id' => $this->company_id,
-										);
-
-							$this->Channex_int_model->update_token($data);
-							return true;
-						}
-					}
-				} else {
-					return false;
-				}
-			}
-		}
-	}
-
 	function channex()
 	{
 		$data['company_id'] = $this->company_id;
@@ -168,10 +117,6 @@ class Channex_integration extends MY_Controller
         	
 	        if($get_token_data){
 
-	        	// if($this->channex_refresh_token()){
-	        	// 	$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
-	        	// }
-
 	        	$token_data = json_decode($get_token_data['meta_data']);
 
 	        	$token = $token_data->channex->api_key;
@@ -202,11 +147,8 @@ class Channex_integration extends MY_Controller
 
         if($data['channex_room_types'] && $data['channex_rate_plans']){
         	$property_id = $data['channex_room_types'][0]['ota_property_id'];
-        	$rate_update_type = $data['channex_room_types'][0]['rate_update_type'];
 
-        	//if($this->channex_refresh_token()){
-        		$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
-        	//}
+    		$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
           
         	$token_data = json_decode($get_token_data['meta_data']);
         
@@ -278,6 +220,14 @@ class Channex_integration extends MY_Controller
         $data['is_mapping'] = $is_mapping;
         $data['channex_id'] = $channex_id;
 
+        $get_key = $this->Companies_model->get_key_from_company_id($this->company_id);
+        $data['key'] = $get_key;
+
+        $import_extra_charge = $this->Channex_int_model->get_channex_x_company(null, $this->company_id);
+        if($import_extra_charge && count($import_extra_charge) > 0){
+        	$data['is_extra_charge'] = $import_extra_charge['is_extra_charge'];
+        }
+
         $this->template->load('bootstrapped_template', null , $data['main_content'], $data);
 	}
 
@@ -290,10 +240,6 @@ class Channex_integration extends MY_Controller
 
         if($get_token_data){
          
-        	// if($this->channex_refresh_token()){
-        	// 	$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
-        	// }
-
         	$token_data = json_decode($get_token_data['meta_data']);
         	$token = $token_data->channex->api_key;
 
@@ -491,5 +437,16 @@ class Channex_integration extends MY_Controller
     					'xml_out' => $xml_out ? $xml_out : null,
 					);
     	$this->Channex_int_model->save_logs($data);
+    }
+
+    function update_import_extra_charge(){
+    	$company_id = $this->company_id;
+
+    	$is_extra_charge = $this->input->post('is_extra_charge');
+
+        $data['is_extra_charge'] = $is_extra_charge;
+
+    	$this->Channex_int_model->update_import_extra_charge($company_id, $data);
+    	echo json_encode(array('success' => true));
     }
 }

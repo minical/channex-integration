@@ -233,6 +233,24 @@ $(document).ready(function(){
             alert(validate);
         }
     });
+
+    $('body').on("click", ".is_extra_charge", function() {
+
+        var is_extra_charge = $('input[name="is_extra_charge"]').prop('checked') ? 1 : 0;
+
+        $.ajax({
+            type: "POST",
+            url: getBaseURL() + "update_import_extra_charge",
+            dataType: 'json',
+            data: {is_extra_charge : is_extra_charge},
+            success: function (response) {
+                if(response.success){
+                    alert(l('Channel Configuration Updated!'));
+                    // location.reload();
+                }
+            }
+        });    
+    });
     
 });
 

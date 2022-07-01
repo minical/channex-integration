@@ -203,6 +203,26 @@ class Companies_model extends CI_Model {
 
         return count($result) > 0 ? $result : NULL;
     }
+
+    function get_key_from_company_id($company_id)
+	{
+		$sql = "SELECT 
+                     kxc.*
+                FROM 
+                    `key_x_company` as kxc
+                WHERE 
+				kxc.company_id = '$company_id'";
+        
+        $query = $this->db->query($sql);
+        
+        if ($query->num_rows >= 1)
+		{
+			$result = $query->result_array();
+			return $result[0]['key_id'];
+		}
+		
+		return NULL;
+	}
 		
 }
 ?>

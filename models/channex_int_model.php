@@ -996,4 +996,9 @@ class Channex_int_model extends CI_Model {
         }
         return NULL;
     }
+
+    function update_import_extra_charge($company_id, $data){
+        $this->db->where('company_id', $company_id);
+        $this->db->update("ota_x_company", $data);
+    }
 }
