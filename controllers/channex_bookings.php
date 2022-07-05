@@ -122,7 +122,8 @@ class Channex_bookings extends MY_Controller
 
         // booking json
 
-        $booking_response = json_decode($booking_response, true);
+        $booking_response = json_decode(json_encode($booking_response), true);
+
         $book_data = $booking_response['data'];
 
         // sorting of booking by timestamp
@@ -140,6 +141,8 @@ class Channex_bookings extends MY_Controller
                 isset($ota_ids[$ota_reservation_code])
             ) {
                 // delete old key
+                $channex_booking_acknowledge_id = $booking_response['data'][$ota_ids[$ota_reservation_code]]['attributes']['id'];
+                $this->channexintegration->acknowledge_bookings($channex_booking_acknowledge_id, $token);
                 unset($booking_response['data'][$ota_ids[$ota_reservation_code]]);
             }
             
