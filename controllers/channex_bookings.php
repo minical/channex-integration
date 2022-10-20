@@ -268,6 +268,10 @@ class Channex_bookings extends MY_Controller
                             $check_out_date = (string)$room->checkout_date;
                             $adult_count = (int)$room->occupancy->adults;
                             $child_count = (int)$room->occupancy->children;
+                            $infant_count = (int)$room->occupancy->infants;
+
+                            $child_count += $infant_count;
+
                             $currency = $reservation->currency;
 
                             $primary_guest = $reservation->customer;
