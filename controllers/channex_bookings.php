@@ -275,7 +275,11 @@ class Channex_bookings extends MY_Controller
                             $currency = $reservation->currency;
 
                             $primary_guest = $reservation->customer;
+                            
                             $per_day_rates = $room->days;
+                            $per_day_rates = json_decode(json_encode($per_day_rates), true);
+                            ksort($per_day_rates);
+                            $per_day_rates = json_decode(json_encode($per_day_rates));
 
                             $notes = $reservation->notes;
 
@@ -1003,6 +1007,8 @@ class Channex_bookings extends MY_Controller
                 }
             }
 
+            $company_detail = $this->Companies_model->get_company_detail($company_id);
+
                 $customer_data = array(
                     "customer_id" => $booking_customer_id,
                     "first_name" =>  $booking_customer['customer_name'] ?? null,
@@ -1022,6 +1028,17 @@ class Channex_bookings extends MY_Controller
                     ),
                 );
 
+                if(isset($company_detail['gateway_meta_data']) && $company_detail['gateway_meta_data']) {
+                    $company_gateway_meta_data = json_decode($company_detail['gateway_meta_data'], true);
+
+                    if(
+                        isset($company_gateway_meta_data['gateway_id']) &&
+                        $company_gateway_meta_data['gateway_id']
+                    ) {
+                        $customer_data['gateway_id'] = $company_gateway_meta_data['gateway_id'];
+                    }
+                }
+
                 if(isset($cc_tokenex_token) && $cc_tokenex_token != ''){
                     $customer_data['company_id'] = $company_id;
                     $customer_data['pci_token'] = $cc_tokenex_token;
@@ -1031,6 +1048,10 @@ class Channex_bookings extends MY_Controller
                     {
                         if(isset($pci_customer_response['customer_response']['customer_id'])){
                             $meta['customer_id'] = $pci_customer_response['customer_response']['customer_id'];
+                            $meta['payment_source_id'] = $pci_customer_response['customer_response']['payment_source_id'];
+                            $meta['token'] = $pci_customer_response['customer_response']['customer_id'];
+                            $meta['vault_token'] = $pci_customer_response['customer_response']['vault_token'];
+                            $meta['source'] = $pci_customer_response['customer_response']['source'];
                         } elseif(isset($pci_customer_response['customer_response']['card_token'])){
                             $meta['nexio_token'] = $pci_customer_response['customer_response']['card_token'];
                         }
@@ -1183,9 +1204,6 @@ class Channex_bookings extends MY_Controller
 
 
             // find an available room and get its room_id
-            $company_detail = $this->Companies_model->get_company_detail($company_id);
-            // $company_detail = array();
-
             $room_id = $this->Rooms_model->get_available_room_id(
                                                     $booking['check_in_date'],
                                                     $booking['check_out_date'],
