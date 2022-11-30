@@ -1,5 +1,5 @@
 <?php
-class Rate_plan_model extends CI_Model {
+class Rate_plans_model extends CI_Model {
 
 	function __construct()
 	{
