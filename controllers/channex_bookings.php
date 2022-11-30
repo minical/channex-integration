@@ -9,7 +9,7 @@ class Channex_bookings extends MY_Controller
         $this->module_name = $this->router->fetch_module();
         $this->load->model('../extensions/'.$this->module_name.'/models/Channex_int_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Room_type_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Rate_plan_model');
+        $this->load->model('../extensions/'.$this->module_name.'/models/Rate_plans_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Customer_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Card_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Charge_types_model');
@@ -124,23 +124,27 @@ class Channex_bookings extends MY_Controller
 
         $booking_response = json_decode(json_encode($booking_response), true);
 
-        $book_data = $booking_response['data'];
+        $book_data = isset($booking_response['data']) && $booking_response['data'] ? $booking_response['data'] : null;
 
         // sorting of booking by timestamp
+        if($book_data) {
         usort($book_data, function($a, $b) {
             return strtotime($a['attributes']['inserted_at']) - strtotime($b['attributes']['inserted_at']);
         });
+        }
 
         $booking_response['data'] = $book_data;
 
         // fetch only highest timestamp bookings (if OTA booking id is same)
         $ota_ids = array();
+
+        if(isset($booking_response['data']) && $booking_response['data']) {
         foreach ($booking_response['data'] as $key => $value) {
             $ota_reservation_code = $value['attributes']['ota_reservation_code'];
             if (
                 isset($ota_ids[$ota_reservation_code])
             ) {
-                // delete old key
+                    // delete old key and acknowledge old bookings
                 $channex_booking_acknowledge_id = $booking_response['data'][$ota_ids[$ota_reservation_code]]['attributes']['id'];
                 $this->channexintegration->acknowledge_bookings($channex_booking_acknowledge_id, $token);
                 unset($booking_response['data'][$ota_ids[$ota_reservation_code]]);
@@ -148,8 +152,9 @@ class Channex_bookings extends MY_Controller
             
             $ota_ids[$ota_reservation_code] = $key;
         }
+        }
 
-        $booking_response['data'] = array_values($booking_response['data']);
+        $booking_response['data'] = isset($booking_response['data']) && $booking_response['data'] ? array_values($booking_response['data']) : null;
         $booking_response = json_decode(json_encode($booking_response));
 
         // prx($booking_response);
@@ -222,8 +227,8 @@ class Channex_bookings extends MY_Controller
                             $booking_loop = false;
                             $error_channex_room_type_id = $channex_room_type_id;
                             $error_cause = 'minical_room_type_id_not_found';
-                            $subject = 'Minical | Missed Reservation from Channex!';
-                            $content = 'A reservation is missed while importing from Channex. <br/>The Room Types are not mapped correctly Minical. <br/>Please fix the mapping for following room type and go to Channex booking and resend the revision.';
+                            $subject = 'PMS | Missed Reservation from Channex!';
+                            $content = 'A reservation is missed while importing from Channex. <br/>The Room Types are not mapped correctly with PMS. <br/>Please fix the mapping for following room type and go to Channex booking and resend the revision.';
                         }
 
                         switch ((string)$reservation->status) {
@@ -1073,7 +1078,7 @@ class Channex_bookings extends MY_Controller
             {
                 if ($rate_plan['minical_rate_plan_id'])
                 {
-                    $minical_rate_plan = $this->Rate_plan_model->get_rate_plan($rate_plan['minical_rate_plan_id']);
+                    $minical_rate_plan = $this->Rate_plans_model->get_rate_plan($rate_plan['minical_rate_plan_id']);
                     if(isset($minical_rate_plan['charge_type_id']) && $minical_rate_plan['charge_type_id']) {
                         $rate_plan['charge_type_id'] =  $minical_rate_plan['charge_type_id'];
                     }
@@ -1095,7 +1100,7 @@ class Channex_bookings extends MY_Controller
             
             // create rate plan
             $rate_plan['room_type_id'] = $minical_room_type_id;
-            $rate_plan_id = $this->Rate_plan_model->create_rate_plan($rate_plan);
+            $rate_plan_id = $this->Rate_plans_model->create_rate_plan($rate_plan);
 
             $average_daily_rate = 0;
             $average_daily_rate_set = false;
@@ -1309,7 +1314,7 @@ class Channex_bookings extends MY_Controller
                     $extra_data = array(
                                     "extra_name" => $extra['extra_name'],
                                     "extra_type" => $extra['extra_type'],
-                                    "charge_type_id" => $this->Charge_type_model->get_default_charge_type_id($company_id),
+                                    "charge_type_id" => $this->Charge_types_model->get_default_charge_type_id($company_id),
                                     "charging_scheme" => $extra['charging_scheme']
                                     );
                     $extra_id = $this->Extra_model->create_extra($extra_data);

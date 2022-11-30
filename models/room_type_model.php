@@ -6,9 +6,7 @@ class Room_type_model extends CI_Model {
     {        
         parent::__construct(); // Call the Model constructor
 
-        $this->load->model('Image_model');
-        $this->load->model('Room_model');
-		$this->load->library('PHPRequests');		
+        $this->load->model('Image_model');		
     }
 
 	// return company's room_types

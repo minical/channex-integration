@@ -24,7 +24,6 @@ class ChannexEmailTemplate {
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Customer_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Companies_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Charge_types_model');
-        $this->ci->load->model('../extensions/'.$this->module_name.'/models/Rates_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Image_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Booking_source_model');
         $this->ci->load->model('Whitelabel_partner_model');
@@ -55,12 +54,12 @@ class ChannexEmailTemplate {
     {
         $booking_data = $this->ci->Channex_booking_model->get_booking_detail($booking_id);
         $company_id = $this->ci->Channex_booking_model->get_company_id($booking_id);
-        $company = $this->ci->Company_model->get_company($company_id);
+        $company = $this->ci->Companies_model->get_company_data($company_id);
 
         $this->set_language($company['default_language']);
 
         $booking_room_history_data = $this->ci->Booking_room_history_model->get_booking_detail($booking_id);
-        $room_data = $this->ci->Room_model->get_room($booking_room_history_data['room_id']);
+        $room_data = $this->ci->Rooms_model->get_room($booking_room_history_data['room_id']);
         $customer_data['staying_customers'] = $this->ci->Channex_booking_model->get_booking_staying_customers($booking_id, $company_id);
 
         $number_of_nights = (strtotime($booking_room_history_data['check_out_date']) - strtotime($booking_room_history_data['check_in_date']))/(60*60*24);
@@ -69,6 +68,15 @@ class ChannexEmailTemplate {
         $check_out_date = date('Y-m-d', strtotime($booking_room_history_data['check_out_date']));
         $rate = $rate_with_taxes = $booking_data['rate'];
         $total_charges = $total_charges_with_taxes = 0;
+
+        $whitelabelinfo = null;
+        $white_label_detail = $this->ci->Whitelabel_partner_model->get_partners(array('id' => $company['partner_id']));
+        
+        if($white_label_detail && isset($white_label_detail[0])) {
+            $whitelabelinfo = $white_label_detail[0];
+        }
+
+        $company_support_email = $whitelabelinfo && isset($whitelabelinfo['support_email']) && $whitelabelinfo['support_email'] ? $whitelabelinfo['support_email'] : 'support@minical.io';
 
         $charge_type_id = null;
         $rate_plan = array();
@@ -86,7 +94,7 @@ class ChannexEmailTemplate {
 
             $rate_plan   = $this->ci->Rate_plan_model->get_rate_plan($booking_data['rate_plan_id']);
 
-            $tax_rates = $this->ci->Charge_type_model->get_taxes($rate_plan['charge_type_id']);
+            $tax_rates = $this->ci->Charge_types_model->get_taxes($rate_plan['charge_type_id']);
 
             $charge_type_id = $rate_plan['charge_type_id'];
 
@@ -111,7 +119,7 @@ class ChannexEmailTemplate {
         {
             $charge_type_id = $booking_data['charge_type_id'];
 
-            $tax_rates = $this->ci->Charge_type_model->get_taxes($booking_data['charge_type_id'], $rate);
+            $tax_rates = $this->ci->Charge_types_model->get_taxes($booking_data['charge_type_id'], $rate);
 
             if($booking_data['pay_period'] == ONE_TIME)
             {
@@ -378,7 +386,7 @@ class ChannexEmailTemplate {
         $email_from = $company['email'];
 
         $this->ci->email->clear();
-        $this->ci->email->from($email_from, $company['name']);
+        $this->ci->email->from($company_support_email, $company['name']);
         $this->ci->email->to($email_list);
         $this->ci->email->reply_to($email_data['company_email']);
 
@@ -399,12 +407,12 @@ class ChannexEmailTemplate {
     {
         $booking_data = $this->ci->Channex_booking_model->get_booking_detail($booking_id);
         $company_id = $this->ci->Channex_booking_model->get_company_id($booking_id);
-        $company = $this->ci->Company_model->get_company($company_id);
+        $company = $this->ci->Companies_model->get_company_data($company_id);
 
         $this->set_language($company['default_language']);
 
         $booking_room_history_data = $this->ci->Booking_room_history_model->get_booking_detail($booking_id);
-        $room_data = $this->ci->Room_model->get_room($booking_room_history_data['room_id']);
+        $room_data = $this->ci->Rooms_model->get_room($booking_room_history_data['room_id']);
         $customer_data['staying_customers'] = $this->ci->Channex_booking_model->get_booking_staying_customers($booking_id, $company_id);
 
         $number_of_nights = (strtotime($booking_room_history_data['check_out_date']) - strtotime($booking_room_history_data['check_in_date']))/(60*60*24);
@@ -413,6 +421,14 @@ class ChannexEmailTemplate {
         $check_out_date = date('Y-m-d', strtotime($booking_room_history_data['check_out_date']));
         $rate = $rate_with_taxes = $booking_data['rate'];
         $total_charges = $total_charges_with_taxes = 0;
+        $whitelabelinfo = null;
+        $white_label_detail = $this->ci->Whitelabel_partner_model->get_partners(array('id' => $company['partner_id']));
+        
+        if($white_label_detail && isset($white_label_detail[0])) {
+            $whitelabelinfo = $white_label_detail[0];
+        }
+
+        $company_support_email = $whitelabelinfo && isset($whitelabelinfo['support_email']) && $whitelabelinfo['support_email'] ? $whitelabelinfo['support_email'] : 'support@minical.io';
 
         $charge_type_id = null;
         $rate_plan = array();
@@ -430,7 +446,7 @@ class ChannexEmailTemplate {
 
             $rate_plan   = $this->ci->Rate_plan_model->get_rate_plan($booking_data['rate_plan_id']);
 
-            $tax_rates = $this->ci->Charge_type_model->get_taxes($rate_plan['charge_type_id']);
+            $tax_rates = $this->ci->Charge_types_model->get_taxes($rate_plan['charge_type_id']);
 
             $charge_type_id = $rate_plan['charge_type_id'];
 
@@ -455,7 +471,7 @@ class ChannexEmailTemplate {
         {
             $charge_type_id = $booking_data['charge_type_id'];
 
-            $tax_rates = $this->ci->Charge_type_model->get_taxes($booking_data['charge_type_id'], $rate);
+            $tax_rates = $this->ci->Charge_types_model->get_taxes($booking_data['charge_type_id'], $rate);
 
             if($booking_data['pay_period'] == ONE_TIME)
             {
@@ -715,7 +731,7 @@ class ChannexEmailTemplate {
 
         $email_from = $company['email'];
 
-        $this->ci->email->from($email_from, $company['name']);
+        $this->ci->email->from($company_support_email, $company['name']);
         $this->ci->email->to($email_data['company_email']);
         $this->ci->email->reply_to($email_data['customer_email']);
 
@@ -744,9 +760,9 @@ class ChannexEmailTemplate {
 
         $company_id = $this->ci->Channex_booking_model->get_company_id($booking_id);
         $booking_room_history_data = $this->ci->Booking_room_history_model->get_booking_detail($booking_id);
-        $room_data = $this->ci->Room_model->get_room($booking_room_history_data['room_id']);
+        $room_data = $this->ci->Rooms_model->get_room($booking_room_history_data['room_id']);
         $room_type = $this->ci->Room_type_model->get_room_type($room_data['room_type_id']);
-        $company = $this->ci->Company_model->get_company($company_id);
+        $company = $this->ci->Companies_model->get_company_data($company_id);
 
         $this->set_language($company['default_language']);
 
@@ -810,7 +826,7 @@ class ChannexEmailTemplate {
 
         $booking_data = $this->ci->Channex_booking_model->get_booking($booking_id);
         $company_id = $booking_data['company_id'];
-        $company = $this->ci->Company_model->get_company($company_id);
+        $company = $this->ci->Companies_model->get_company_data($company_id);
 
         $whitelabelinfo = null;
         $white_label_detail = $this->ci->Whitelabel_partner_model->get_partners(array('id' => $company['partner_id']));
@@ -824,7 +840,7 @@ class ChannexEmailTemplate {
         $this->set_language($company['default_language']);
 
         $booking_room_history_data = $this->ci->Booking_room_history_model->get_block($booking_id);
-        $room_data = $this->ci->Room_model->get_room($booking_room_history_data['room_id']);
+        $room_data = $this->ci->Rooms_model->get_room($booking_room_history_data['room_id']);
 
         $customer_info = $this->ci->Customer_model->get_customer($booking_data['booking_customer_id']);             
         $room_type = $this->ci->Room_type_model->get_room_type($room_data['room_type_id']);             
@@ -855,7 +871,8 @@ class ChannexEmailTemplate {
             'allow_non_continuous_bookings' => $company['allow_non_continuous_bookings'],
             'is_non_continuous_available' => $is_non_continuous_available,
             'room_type_availability' => $room_type_availability,
-            'no_rooms_available' => $no_rooms_available
+            'no_rooms_available' => $no_rooms_available,
+            'whitelabel_username' => $whitelabelinfo['name']
         );
 
         $this->ci->email->clear();
@@ -892,7 +909,7 @@ class ChannexEmailTemplate {
 
     function send_error_alert_email($email_data){
 
-        $company = $this->ci->Company_model->get_company($email_data['company_id']);
+        $company = $this->ci->Companies_model->get_company_data($email_data['company_id']);
 
         $whitelabelinfo = null;
         $white_label_detail = $this->ci->Whitelabel_partner_model->get_partners(array('id' => $company['partner_id']));
@@ -904,7 +921,7 @@ class ChannexEmailTemplate {
         $company_support_email = $whitelabelinfo && isset($whitelabelinfo['support_email']) && $whitelabelinfo['support_email'] ? $whitelabelinfo['support_email'] : 'support@minical.io';
 
         $email_data['company_name'] = $company['name'];
-
+        $email_data['whitelabel_username'] = $whitelabelinfo['name'];
         $this->ci->email->clear();
         $this->ci->email->from($company_support_email);
 

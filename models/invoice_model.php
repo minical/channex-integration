@@ -6,10 +6,8 @@ class Invoice_model extends CI_Model {
     {
         // Call the Model constructor
         parent::__construct();
-		$this->load->model('Company_model');		
+				
 		$this->load->model('Charge_model');		
-		$this->load->model('Payment_model');		
-		
     }	
 
 	function update_charges($charge_changes) {

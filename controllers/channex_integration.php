@@ -9,20 +9,8 @@ class Channex_integration extends MY_Controller
         $this->module_name = $this->router->fetch_module();
         $this->load->model('../extensions/'.$this->module_name.'/models/Channex_int_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Room_type_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Rate_plan_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Customer_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Card_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Charge_types_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Currency_model');
+        $this->load->model('../extensions/'.$this->module_name.'/models/Rate_plans_model');
         $this->load->model('../extensions/'.$this->module_name.'/models/Companies_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Rooms_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Rates_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Date_range_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Booking_room_history_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Booking_log_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/Invoice_model');
-        $this->load->model('../extensions/'.$this->module_name.'/models/OTA_model');
-        
         $this->load->library('../extensions/'.$this->module_name.'/libraries/ChannexIntegration');
         
 		$view_data['menu_on'] = true;
@@ -193,7 +181,7 @@ class Channex_integration extends MY_Controller
 			}
 
         	$data['minical_room_types'] = $this->Room_type_model->get_room_types($this->company_id);
-        	$data['minical_rate_plans'] = $this->Rate_plan_model->get_rate_plans($this->company_id);
+        	$data['minical_rate_plans'] = $this->Rate_plans_model->get_rate_plans($this->company_id);
 
         	foreach ($data['channex_room_types'] as $key => $value) {
         		foreach ($data['channex_room_types_rate_plans'] as $key1 => $value1) {
@@ -231,10 +219,85 @@ class Channex_integration extends MY_Controller
         $this->template->load('bootstrapped_template', null , $data['main_content'], $data);
 	}
 
+	// function add_room_types(){
+	// 	$property_id = $this->input->post('property_id');
+	// 	$channex_id = $this->input->post('channex_id');
+
+	// 	$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
+
+ //        if($get_token_data) {
+         
+ //        	$token_data = json_decode($get_token_data['meta_data']);
+ //        	$token = $token_data->channex->api_key;
+
+ //        	$minical_room_types = $this->Room_type_model->get_room_types_with_rooms($this->company_id);
+ //        	$room_type_data = array();
+
+ //        	foreach ($minical_room_types as $key => $value) {
+ //        		if(isset($value['room_count']) && $value['room_count'] > 0) {
+		        	
+	// 	        	$room_type_data =  array(
+	// 	                                    "property_id" => $property_id,
+	// 	                                    "title" => $value['name'],
+	// 	                                    "count_of_rooms" => $value['room_count'],
+	// 	                                    "occ_adults" => $value['max_adults'],
+	// 	                                    "occ_children" => $value['max_children'],
+	// 	                                    "occ_infants" => 0,
+	// 	                                    "default_occupancy" => $value['max_adults']
+	// 	                                );
+
+	// 		        $rt_data['room_type'] = $room_type_data;
+
+	// 	        	$rt_response[$value['id']] = $this->channexintegration->add_room_types($rt_data, $token);
+	// 	        }
+	//         }
+
+	//         // prx($rt_response);
+
+	//         $minical_rate_plans = $this->Rate_plans_model->get_rate_plans($this->company_id);
+
+ //        	$rate_plan_data = array();
+
+ //        	foreach ($minical_rate_plans as $key => $value) {
+
+ //        		if(isset($rt_response[$value['room_type_id']]) && $rt_response[$value['room_type_id']]) {
+
+ //        			$channex_room_type = json_decode($rt_response[$value['room_type_id']], true);
+ //        			$channex_room_type_id = $channex_room_type['data']['id'];
+
+	// 	        	$rate_plan_data =  array(
+	// 	                                    "property_id" => $property_id,
+	// 	                                    "room_type_id" => $channex_room_type_id,
+	// 	                                    "title" => $value['rate_plan_name'],
+	// 	                                    "currency " => $value['currency_code'],
+	// 	                                    "options" => array(
+	// 	                                    	array(
+	// 		                                    	'occupancy' => 3,
+	// 		                                    	'is_primary' => true
+	// 	                                    	)
+	// 	                                    )
+	// 	                                );
+		        
+
+	// 		        $rp_data['rate_plan'] = $rate_plan_data;
+	// 		        // prx($rp_data, 1);
+	// 	        	$rp_response[$value['rate_plan_id']] = $this->channexintegration->add_rate_plans($rp_data, $token);
+	// 	        	// prx($response);
+	// 	        }
+	//         }
+	//         // die;
+	//         // prx($rp_response);
+
+	//         $this->get_room_types($property_id, $channex_id);
+ //        }
+	// }
+
 	function get_room_types()
 	{
-		$property_id = $this->input->post('property_id');
-		$channex_id = $this->input->post('channex_id');
+		//if(!$property_id && !$channex_id){
+			$property_id = $this->input->post('property_id');
+			$channex_id = $this->input->post('channex_id');
+		//}
 
 		$get_token_data = $this->Channex_int_model->get_token($channex_id, $this->company_id, 'channex');
 
@@ -281,7 +344,7 @@ class Channex_integration extends MY_Controller
 			}
 
         	$data['minical_room_types'] = $this->Room_type_model->get_room_types($this->company_id);
-            $data['minical_rate_plans'] = $this->Rate_plan_model->get_rate_plans($this->company_id);
+            $data['minical_rate_plans'] = $this->Rate_plans_model->get_rate_plans($this->company_id);
 
             $xml_out = 	json_encode($data['channex_room_types_rate_plans']);
 

@@ -147,7 +147,7 @@
 			<br /><br />
 			<?php echo l('Any questions please let us know', true); ?><br />
 			<?php echo l('Regards', true); ?><br />
-			<?php echo l('Minical', true); ?>
+			<?php echo isset($whitelabel_username) && $whitelabel_username ? $whitelabel_username : 'PMS Admin'; ?>
 
 		</div>
 	</body>
