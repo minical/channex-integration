@@ -27,6 +27,7 @@ class ChannexEmailTemplate {
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Image_model');
         $this->ci->load->model('../extensions/'.$this->module_name.'/models/Booking_source_model');
         $this->ci->load->model('Whitelabel_partner_model');
+        $this->ci->load->model('Currency_model');
 
         $this->ci->load->library('Email');
         $this->ci->load->helper('date_format_helper');
@@ -311,26 +312,24 @@ class ChannexEmailTemplate {
             }
         }
 
+        $default_currency = $this->ci->Currency_model->get_default_currency($company_id);
+        $currency_symbol = isset($default_currency['currency_code']) ? $default_currency['currency_code'] : null;
+
         //Send confirmation email
         $email_data = array (
             'booking_id' => $booking_id,
-
             'customer_name' => $customer_info['customer_name'],
-
+            'currency_symbol' => $currency_symbol,
             'customer_address' => $customer_info['address'],
             'customer_city' => $customer_info['city'],
             'customer_region' => $customer_info['region'],
             'customer_country' => $customer_info['country'],
             'customer_postal_code' => $customer_info['postal_code'],
-
             'customer_phone' => $customer_info['phone'],
             'customer_email' => $customer_info['email'],
-
             'check_in_date' => $check_in_date,
             'check_out_date' => $check_out_date,
-
             'room_type' => $room_type['name'],
-
             'average_daily_rate' => $booking_data['rate'],
             'rate' => $rate,
             'rate_with_taxes' => $rate_with_taxes,
@@ -663,26 +662,24 @@ class ChannexEmailTemplate {
             }
         }
 
+        $default_currency = $this->ci->Currency_model->get_default_currency($company_id);
+        $currency_symbol = isset($default_currency['currency_code']) ? $default_currency['currency_code'] : null;
+
         //Send confirmation email
         $email_data = array (
             'booking_id' => $booking_id,
-
             'customer_name' => $customer_info['customer_name'],
-
             'customer_address' => $customer_info['address'],
             'customer_city' => $customer_info['city'],
             'customer_region' => $customer_info['region'],
             'customer_country' => $customer_info['country'],
             'customer_postal_code' => $customer_info['postal_code'],
-
             'customer_phone' => $customer_info['phone'],
             'customer_email' => $customer_info['email'],
-
             'check_in_date' => $check_in_date,
             'check_out_date' => $check_out_date,
-
+            'currency_symbol' => $currency_symbol,
             'room_type' => $room_type['name'],
-
             'average_daily_rate' => $booking_data['rate'],
             'rate' => $rate,
             'rate_with_taxes' => $rate_with_taxes,

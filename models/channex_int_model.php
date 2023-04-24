@@ -736,6 +736,16 @@ class Channex_int_model extends CI_Model {
         }
     }
 
+    function insert_payment($data)
+    {
+        $this->db->insert('payment', $data); 
+        
+        if ($this->db->_error_message())
+        {
+            return show_error($this->db->_error_message());
+        }
+    }
+
     function update_booking($data)
     {
         $data = $data;
@@ -1002,5 +1012,46 @@ class Channex_int_model extends CI_Model {
     function update_import_extra_charge($company_id, $data){
         $this->db->where('company_id', $company_id);
         $this->db->update("ota_x_company", $data);
+    }
+
+    function get_payment_types($company_id, $type_name = null)
+    {       
+        $this->db->where('company_id', $company_id);
+        $this->db->where('is_deleted', 0);
+        $this->db->where('is_read_only', 0); // read_only payment types are not shown
+
+        if($type_name)
+            $this->db->where('payment_type', $type_name);
+        
+        $query = $this->db->get('payment_type');
+        
+        if ($query->num_rows >= 1) 
+        {   
+            return $query->row_array();
+        }
+        
+        return NULL;
+    }
+        
+    function create_payment_type($company_id, $payment_type, $is_read_only = 0)
+    {
+        $data = array (
+            'company_id' => $company_id,
+            'payment_type' => $payment_type,
+            'is_read_only' => $is_read_only
+        );
+        
+        $this->db->insert('payment_type', $data);    
+    
+        $query = $this->db->query('select LAST_INSERT_ID( ) AS last_id');
+            $result = $query->result_array();
+        if(isset($result[0]))
+        {  
+          return $result[0]['last_id'];
+        }
+            else
+        {  
+          return null;
+        }
     }
 }

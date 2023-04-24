@@ -157,14 +157,14 @@ class Channex_bookings extends MY_Controller
         $booking_response['data'] = isset($booking_response['data']) && $booking_response['data'] ? array_values($booking_response['data']) : null;
         $booking_response = json_decode(json_encode($booking_response));
 
-        // prx($booking_response);
-
         $booking_array = array();
         
         if (isset($booking_response->data)){
 
             $check_ota_booking = array();
+            $check_ota_tax_booking = array();
             $is_service_add = false;
+            $is_tax_add = false;
 
             foreach ($booking_response->data as $key => $book) {
                 
@@ -176,10 +176,17 @@ class Channex_bookings extends MY_Controller
                 
                 $property_id = $reservation->property_id;
 
-                $raw_message = isset($reservation->raw_message) ? json_decode($reservation->raw_message, true) : null;
-                // $raw_message = null;
+                // get data from raw message
+                $raw_message = null;
+                if(isset($reservation->raw_message)) {
+                    $raw_message = stripcslashes($reservation->raw_message);
+                    $raw_message = json_decode($raw_message, true);
+                }
+                //$raw_message = isset($reservation->raw_message) ? json_decode($reservation->raw_message, true) : null;
+                // 
                 $comment = $CommissionPayableAmount = $CommissionAmount = $CommissionCurrencyCode = $CommissionDecimalPlace = "";
-
+                $guest_paid = 0;
+                // prx($raw_message);
                 if($raw_message){
                     if(isset($raw_message['ResGlobalInfo']['TotalCommissions']) && $raw_message['ResGlobalInfo']['TotalCommissions']){
                         $comment = $raw_message['ResGlobalInfo']['TotalCommissions']['Comment'];
@@ -187,6 +194,10 @@ class Channex_bookings extends MY_Controller
                         $CommissionAmount = $raw_message['ResGlobalInfo']['TotalCommissions']['CommissionPayableAmount']['amount'];
                         $CommissionCurrencyCode = $raw_message['ResGlobalInfo']['TotalCommissions']['CommissionPayableAmount']['currency_code'];
                         $CommissionDecimalPlace = $raw_message['ResGlobalInfo']['TotalCommissions']['CommissionPayableAmount']['decimal_places'];
+                    }
+
+                    if(isset($raw_message['paid']) && $raw_message['paid']) {
+                        $guest_paid = $raw_message['paid'];
                     }
                 }
 
@@ -207,6 +218,7 @@ class Channex_bookings extends MY_Controller
                 $rooms = $reservation->rooms;
 
                 $services = "";
+                $taxes = "";
                 if(isset($channex_x_company['is_extra_charge']) && $channex_x_company['is_extra_charge']) {
                     $services = $reservation->services;
                 }
@@ -242,6 +254,16 @@ class Channex_bookings extends MY_Controller
                                 $booking_type = 'cancelled';
                                 break;
                         }
+
+                        if(isset($channex_x_company['is_extra_charge']) && $channex_x_company['is_extra_charge']) {
+                            $taxes = $room->taxes;
+                        }
+
+                        if(!in_array($channex_booking_id, $check_ota_tax_booking)) {
+                            $is_tax_add = true;
+                            $check_ota_tax_booking[] = $channex_booking_id;
+                        }
+
 
                         if ($booking_type == "cancelled")
                         {
@@ -317,9 +339,14 @@ class Channex_bookings extends MY_Controller
                             }
 
                             $ota_services = '';
+                            $ota_taxes = '';
                             if($is_service_add && $services){
                                 $ota_services = $services;
                                 $is_service_add = false;
+                            }
+                            if($is_tax_add && $taxes){
+                                $ota_taxes = json_decode(json_encode($taxes), true);
+                                $is_tax_add = false;
                             }
 
                             $guest_name = $primary_guest->name;
@@ -329,6 +356,7 @@ class Channex_bookings extends MY_Controller
                                 'ota_booking_id' => $channex_booking_id,
                                 'booking_type' => $booking_type,
                                 'company_id' => $company_id,
+                                'channex_booking_ack_id' => $channex_booking_ack_id,
                                 'minical_room_type_id' => $minical_room_type_id,
                                 "source" => SOURCE_CHANNEX, // this represents channex
                                 "sub_source" => $channex_booking_source,
@@ -338,6 +366,8 @@ class Channex_bookings extends MY_Controller
                                 "children_count" => $child_count,
                                 "booking_notes" => "created from OTA (Booking ID: ".$channex_booking_id.")\n".(string)$notes,
                                 "services" => $ota_services,
+                                "taxes" => $ota_taxes,
+                                "guest_paid_amount" => $guest_paid,
                                 "rate_plan" => array(
                                     "rate_plan_name" => "ota #".$channex_booking_id,
                                     "number_of_adults_included_for_base_rate" => $adult_count,
@@ -438,9 +468,6 @@ class Channex_bookings extends MY_Controller
                         $booking_array = array();
                     }
                 }
-
-                // acknowledgement bookings
-                $this->channexintegration->acknowledge_bookings($channex_booking_ack_id, $token);
             }   
         }
 
@@ -554,7 +581,6 @@ class Channex_bookings extends MY_Controller
                         $get_modified_booking_charges_and_payments = $this->get_modified_booking_charges_and_payments($pms_modified_booking_ids);
                         $modified_booking_charges_payments[$booking['ota_booking_id']] = $get_modified_booking_charges_and_payments;
                     }
-                    
                     $this->delete_bookings($booking_ids_to_be_deleted);
                 }
                 // if the booking is being cancelled (but not modified), then send confirmation to OTA
@@ -612,7 +638,6 @@ class Channex_bookings extends MY_Controller
                 $pms_booking_ids[] = isset($response['minical_booking_id']) && $response['minical_booking_id'] ? $response['minical_booking_id'] : null;
                 
                 $this->OTA_model->insert_booking($ota_booking);
-
                 if(count($modified_booking_charges_payments) > 0 && $response['minical_booking_id']) // set previous charges and payments with modified bookings
                 {
                     if(isset($modified_booking_charges_payments[$response['ota_booking_id']]) && $modified_booking_charges_payments[$response['ota_booking_id']])
@@ -683,6 +708,8 @@ class Channex_bookings extends MY_Controller
                     $msg = "Booking created successfully";
                 }
 
+                $this->channexintegration->acknowledge_bookings($booking['channex_booking_ack_id'], $token);
+
                 $update_availability_data = array(
                                         'start_date' => $booking['check_in_date'],
                                         'end_date' => $booking['check_out_date'],
@@ -740,7 +767,6 @@ class Channex_bookings extends MY_Controller
                 }
             }
         }
-        
         if(count($payments_total) > 0)
         {
             foreach($payments_total as $payments)
@@ -906,6 +932,22 @@ class Channex_bookings extends MY_Controller
             $services = array();
             if($booking['services'] && count($booking['services']) > 0)
                 $services = json_decode(json_encode($booking['services']), true);
+
+            $taxes = array();
+
+            if($booking['taxes'] && count($booking['taxes']) > 0)
+                $taxes[] = json_decode(json_encode($booking['taxes']), true);
+
+            // if($booking['taxes'] && count($booking['taxes']) > 0) {
+
+            //     if(is_array($booking['taxes']) && count($booking['taxes']) > 1) {
+            //         $taxes = json_decode(json_encode($booking['taxes']), true);
+            //     } else {
+            //         $taxes[] = json_decode(json_encode($booking['taxes']), true);
+            //     }
+            // }
+
+            // prx($taxes);
 
             if(isset($booking['card']) && isset($booking['card']['number']) && isset($booking['card']['token'])){
                 $cc_tokenex_token = $cc_cvc_encrypted = NULL;
@@ -1078,6 +1120,7 @@ class Channex_bookings extends MY_Controller
             {
                 if ($rate_plan['minical_rate_plan_id'])
                 {
+                    $rate_plan['parent_rate_plan_id'] = $rate_plan['minical_rate_plan_id'];
                     $minical_rate_plan = $this->Rate_plans_model->get_rate_plan($rate_plan['minical_rate_plan_id']);
                     if(isset($minical_rate_plan['charge_type_id']) && $minical_rate_plan['charge_type_id']) {
                         $rate_plan['charge_type_id'] =  $minical_rate_plan['charge_type_id'];
@@ -1342,6 +1385,42 @@ class Channex_bookings extends MY_Controller
                     
                     $this->Charge_types_model->insert_charge($charge);
                 }
+            }
+
+            if($taxes && count($taxes) > 0) {
+                foreach ($taxes as $key => $tax) {
+                    $charge['selling_date'] = $company_detail['selling_date'];
+                    $charge['booking_id'] = $booking_id;
+                    $charge['charge_type_id'] = $rate_plan['charge_type_id'];
+                    $charge['amount'] = $tax['total_price'];
+                    $charge['description'] = (isset($tax['name']) && $tax['name']) ? $tax['name'] : "Additonal tax";
+                    
+                    $this->Charge_types_model->insert_charge($charge);
+                }
+            }
+
+            if(isset($booking['guest_paid_amount']) && $booking['guest_paid_amount']) {
+
+                $payment_type = $this->Channex_int_model->get_payment_types($company_id, 'Hostelworld Fee');
+
+                if($payment_type) {
+                    $payment_type_id = $payment_type['payment_type_id'];
+                } else {
+                    $payment_type_id = $this->Channex_int_model->create_payment_type($company_id, 'Hostelworld Fee');
+                }
+
+                $payment_data = Array(
+                    "user_id" => 0,
+                    "booking_id" => $booking_id,
+                    "selling_date" => $company_detail['selling_date'],
+                    "amount" => $booking['guest_paid_amount'],
+                    "customer_id" => $booking_customer_id,
+                    "payment_type_id" => $payment_type_id,
+                    "description" => "Guest Paid",
+                    "date_time" => gmdate("Y-m-d H:i:s")
+                );
+
+                $this->Channex_int_model->insert_payment($payment_data);
             }
 
             $log_data = array(
